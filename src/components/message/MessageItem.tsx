@@ -414,7 +414,7 @@ export const MessageItem = (props: MessageItemProps) => {
   } = props;
   const pmUserCache = useRef(new Map<string, User>());
   const EMPTY_MESSAGES = useRef<MessageType[]>([]).current;
-  const EMPTY_CUSTOM_EMOJIS = useRef<unknown[]>([]).current;
+  const EMPTY_CUSTOM_EMOJIS = useRef<Array<{ name: string; url: string }>>([]).current;
 
   const ircCurrentUser = ircClient.getCurrentUser(message.serverId);
   const isCurrentUser = ircCurrentUser?.username === message.userId;

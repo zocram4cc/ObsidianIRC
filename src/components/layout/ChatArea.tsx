@@ -50,7 +50,7 @@ import UserProfileModal from "../ui/UserProfileModal";
 import { ChatHeader } from "./ChatHeader";
 
 const EMPTY_ARRAY: User[] = [];
-const EMPTY_CUSTOM_EMOJIS: unknown[] = [];
+const EMPTY_CUSTOM_EMOJIS: Array<{ name: string; url: string }> = [];
 
 export const TypingIndicator: React.FC<{
   serverId: string;
