@@ -11,16 +11,38 @@ interface MessageReactionsProps {
   reactions: MessageType["reactions"];
   currentUserUsername?: string;
   onReactionClick: (emoji: string, currentUserReacted: boolean) => void;
+  customEmojis?: Array<{ name: string; url: string }>;
 }
 
 export const MessageReactions: React.FC<MessageReactionsProps> = ({
   reactions,
   currentUserUsername,
   onReactionClick,
+  customEmojis,
 }) => {
   if (!reactions || reactions.length === 0) {
     return null;
   }
+
+  // Helper to render emoji content (image or text)
+  const renderEmojiContent = (emoji: string) => {
+    // Check if it's a custom emoji (wrapped in colons)
+    const match = emoji.match(/^:?(.+?):?$/);
+    if (match && customEmojis) {
+      const emojiName = match[1];
+      const customEmoji = customEmojis.find((e) => e.name === emojiName);
+      if (customEmoji) {
+        return (
+          <img
+            src={customEmoji.url}
+            alt={emoji}
+            className="w-4 h-4 object-contain"
+          />
+        );
+      }
+    }
+    return <span>{emoji}</span>;
+  };
 
   // Group reactions by emoji
   const groupedReactions = reactions.reduce(
@@ -59,7 +81,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               onReactionClick(emoji, reactionData.currentUserReacted)
             }
           >
-            <span>{emoji}</span>
+            {renderEmojiContent(emoji)}
             <span className="text-xs font-medium">{reactionData.count}</span>
             {/* Show X button if current user reacted */}
             {reactionData.currentUserReacted && (

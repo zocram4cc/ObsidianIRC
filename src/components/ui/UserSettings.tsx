@@ -631,17 +631,38 @@ export const UserSettings: React.FC = React.memo(() => {
       setName(currentServer.id, realname);
     }
 
-    if (supportsMetadata) {
-      const metadata: Record<string, string> = {};
-      if (avatar) metadata.avatar = avatar;
-      if (displayName) metadata["display-name"] = displayName;
-      if (homepage) metadata.homepage = homepage;
-      if (status) metadata.status = status;
-      if (color) metadata.color = color;
-      if (bot) metadata.bot = bot;
+    if (supportsMetadata && originalValues) {
+      const metadataKeys = [
+        { key: "avatar", ircKey: "avatar" },
+        { key: "displayName", ircKey: "display-name" },
+        { key: "homepage", ircKey: "homepage" },
+        { key: "status", ircKey: "status" },
+        { key: "color", ircKey: "color" },
+        { key: "bot", ircKey: "bot" },
+      ];
 
-      for (const [key, value] of Object.entries(metadata)) {
-        sendRaw(currentServer.id, `METADATA * SET ${key} :${value}`);
+      const currentValues: Record<string, string> = {
+        avatar,
+        displayName,
+        homepage,
+        status,
+        color,
+        bot,
+      };
+
+      for (const { key, ircKey } of metadataKeys) {
+        const newValue = currentValues[key];
+        const oldValue = originalValues[key] as string;
+
+        if (newValue !== oldValue) {
+          if (newValue) {
+            // Set new value
+            sendRaw(currentServer.id, `METADATA * SET ${ircKey} :${newValue}`);
+          } else {
+            // Unset/Delete key (Ergo unsets if no value is provided)
+            sendRaw(currentServer.id, `METADATA * SET ${ircKey}`);
+          }
+        }
       }
     }
 
@@ -698,6 +719,7 @@ export const UserSettings: React.FC = React.memo(() => {
     updateGlobalSettings,
     updateServer,
     toggleSettingsModal,
+    originalValues,
   ]);
 
   // Handle close

@@ -54,6 +54,46 @@ const DiscoverGrid = () => {
         <h1 className="rounded-lg text-2xl font-bold mb-2">
           Welcome to {__DEFAULT_IRC_SERVER_NAME__}!
         </h1>
+        <button
+          onClick={() => {
+            let host = "";
+            let port = "443";
+            try {
+              const url = new URL(__DEFAULT_IRC_SERVER__);
+              host = url.hostname;
+              if (url.port) {
+                port = url.port;
+              } else if (url.protocol === "wss:" || url.protocol === "https:") {
+                port = "443";
+              } else if (url.protocol === "ws:" || url.protocol === "http:") {
+                port = "80";
+              }
+              if (url.pathname && url.pathname !== "/") {
+                host = `${url.host}${url.pathname}`;
+              }
+            } catch (e) {
+              host =
+                __DEFAULT_IRC_SERVER__.split(":")[1]?.replace(/^\/\//, "") ||
+                "";
+              port = __DEFAULT_IRC_SERVER__.split(":")[2] || "443";
+            }
+
+            toggleAddServerModal(true, {
+              name: __DEFAULT_IRC_SERVER_NAME__ || "Obsidian IRC",
+              host,
+              port,
+              nickname: "",
+              ui: {
+                hideServerInfo: true,
+                hideClose: true,
+                title: `Welcome to ${__DEFAULT_IRC_SERVER_NAME__ || "Obsidian IRC"}!`,
+              },
+            });
+          }}
+          className="mt-4 px-6 py-2 bg-discord-primary text-white rounded font-medium hover:bg-opacity-80 transition-colors"
+        >
+          Connect to Server
+        </button>
       </div>
     </div>
   ) : (
