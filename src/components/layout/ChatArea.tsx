@@ -1367,7 +1367,24 @@ export const ChatArea: React.FC<{
   };
 
   const handleEmojiSelect = (emojiData: EmojiClickData) => {
-    setMessageText((prev) => prev + emojiData.emoji);
+    // Standard Unicode emojis usually have the 'emoji' property populated.
+    // Custom emojis have their provided 'id' in the 'unified' property.
+    const emojiId = emojiData.unified || emojiData.names?.[0];
+
+    const customEmoji = emojiId
+      ? channelCustomEmojis.find(
+          (e) => e.name.toLowerCase() === emojiId.toLowerCase(),
+        )
+      : null;
+
+    if (customEmoji) {
+      // Use the original casing from our store (e.g. "OMEGALUL")
+      setMessageText((prev) => `${prev}:${customEmoji.name}:`);
+    } else {
+      // Standard Unicode emoji
+      setMessageText((prev) => prev + emojiData.emoji);
+    }
+
     setIsEmojiSelectorOpen(false);
   };
 
@@ -1871,6 +1888,7 @@ export const ChatArea: React.FC<{
         isOpen={reactionModal.isOpen}
         onClose={closeReactionModal}
         onSelectEmoji={selectReaction}
+        customEmojis={channelCustomEmojis}
       />
 
       <ModerationModal

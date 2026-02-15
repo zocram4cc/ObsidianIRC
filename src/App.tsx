@@ -60,10 +60,33 @@ const initializeEnvSettings = (
 
   if (!defaultServer) return;
 
-  const host = defaultServer.split(":")[1]?.replace(/^\/\//, "");
-  const port = defaultServer.split(":")[2];
+  let host = "";
+  let port = "443";
 
-  if (!host || !port) {
+  try {
+    const url = new URL(defaultServer);
+    host = url.hostname;
+    if (url.port) {
+      port = url.port;
+    } else if (url.protocol === "wss:" || url.protocol === "https:") {
+      port = "443";
+    } else if (url.protocol === "ws:" || url.protocol === "http:") {
+      port = "80";
+    }
+    // If it's a websocket URL with a path (like /webirc), include it in the host
+    if (url.pathname && url.pathname !== "/") {
+      host = `${url.host}${url.pathname}`;
+    }
+  } catch (e) {
+    // Fallback for non-standard URLs
+    const parts = defaultServer.split(":");
+    if (parts.length >= 2) {
+      host = parts[1].replace(/^\/\//, "");
+      port = parts[2] || (defaultServer.startsWith("wss") ? "443" : "80");
+    }
+  }
+
+  if (!host) {
     return;
   }
 

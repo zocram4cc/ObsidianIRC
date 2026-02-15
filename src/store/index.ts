@@ -2889,13 +2889,17 @@ const useStore = create<AppState>((set, get) => ({
     const key = `${serverId}-${channelName}`;
     const state = get();
 
+    console.log(`[EMOJI_FETCH] Starting fetch for ${channelName} from ${url}`);
+
     // Skip if already fetching
     if (state.emojiFetchInProgress[key]) {
+      console.log(`[EMOJI_FETCH] Already fetching for ${key}, skipping.`);
       return;
     }
 
     // Skip only if we have emojis for this key AND the URL is identical
     if (state.customEmojis[key] && state.customEmojis[key].url === url) {
+      console.log(`[EMOJI_FETCH] URL unchanged for ${key}, skipping fetch.`);
       return;
     }
 
@@ -2909,8 +2913,12 @@ const useStore = create<AppState>((set, get) => ({
 
     try {
       const response = await fetch(url);
+      console.log(`[EMOJI_FETCH] HTTP Status: ${response.status} for ${url}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const emojis = await response.json();
+      console.log(
+        `[EMOJI_FETCH] Successfully loaded ${emojis.length} emojis for ${channelName}`,
+      );
       set((state) => ({
         customEmojis: {
           ...state.customEmojis,
@@ -2922,10 +2930,7 @@ const useStore = create<AppState>((set, get) => ({
         },
       }));
     } catch (error) {
-      console.error(
-        `[FETCH_EMOJIS] Failed to fetch for ${channelName}:`,
-        error,
-      );
+      console.error(`[EMOJI_FETCH] Failed to fetch for ${channelName}:`, error);
       set((state) => ({
         emojiFetchInProgress: {
           ...state.emojiFetchInProgress,
@@ -4230,6 +4235,16 @@ ircClient.on(
               messages: [],
               users: [],
             };
+
+            // Force request emoji-list-url for the joined channel
+            // This is a side-effect, but it's safe here as it doesn't affect the state update calculation
+            setTimeout(
+              () =>
+                ircClient.metadataGet(serverId, channelName, [
+                  "emoji-list-url",
+                ]),
+              0,
+            );
 
             return {
               ...server,
@@ -6813,6 +6828,7 @@ ircClient.on("VERIFY_SUCCESS", ({ serverId, account, message }) => {
 
 // Metadata event handlers
 ircClient.on("METADATA", ({ serverId, target, key, visibility, value }) => {
+  console.log(`[METADATA_EVENT] ${serverId} ${target} ${key}=${value}`);
   useStore.setState((state) => {
     // Resolve the target - if it's "*", it refers to the current user
     const serverCurrentUser = ircClient.getCurrentUser(serverId);
@@ -7005,15 +7021,34 @@ ircClient.on("METADATA", ({ serverId, target, key, visibility, value }) => {
 
   // Trigger fetch as a side effect outside of setState
   if (key === "emoji-list-url" && value) {
-    useStore
-      .getState()
-      .fetchCustomEmojis(serverId, target.toLowerCase(), value);
+    // Standardize target: handle current user '*' and ensure channel names are clean
+    const resolvedTarget =
+      target === "*"
+        ? ircClient.getNick(serverId) || target
+        : target.split("!")[0];
+
+    // Ensure we use lowercased channel name for the store key
+    const cleanTarget = resolvedTarget.toLowerCase();
+
+    const currentState = useStore.getState();
+    const emojiKey = `${serverId}-${cleanTarget}`;
+
+    // Synchronous check before calling the async action
+    if (!currentState.emojiFetchInProgress[emojiKey]) {
+      console.log(
+        `[EMOJI_FETCH_TRIGGER] Channel: ${cleanTarget}, Key: ${emojiKey}`,
+      );
+      useStore.getState().fetchCustomEmojis(serverId, cleanTarget, value);
+    }
   }
 });
 
 ircClient.on(
   "METADATA_KEYVALUE",
   ({ serverId, target, key, visibility, value }) => {
+    console.log(
+      `[METADATA_KEYVALUE_EVENT] ${serverId} ${target} ${key}=${value}`,
+    );
     const state = useStore.getState();
     const isFetchingOwn = state.metadataFetchInProgress[serverId];
 
@@ -7255,9 +7290,24 @@ ircClient.on(
 
     // Trigger fetch as a side effect outside of setState
     if (key === "emoji-list-url" && value) {
-      useStore
-        .getState()
-        .fetchCustomEmojis(serverId, target.toLowerCase(), value);
+      // Standardize target: handle current user '*' and ensure channel names are clean
+      const resolvedTarget =
+        target === "*"
+          ? ircClient.getNick(serverId) || state.currentUser?.username || target
+          : target.split("!")[0];
+
+      const cleanTarget = resolvedTarget.toLowerCase();
+
+      const currentState = useStore.getState();
+      const emojiKey = `${serverId}-${cleanTarget}`;
+
+      // Synchronous check before calling the async action
+      if (!currentState.emojiFetchInProgress[emojiKey]) {
+        console.log(
+          `[EMOJI_FETCH_TRIGGER_KV] Channel: ${cleanTarget}, Key: ${emojiKey}`,
+        );
+        useStore.getState().fetchCustomEmojis(serverId, cleanTarget, value);
+      }
     }
   },
 );
