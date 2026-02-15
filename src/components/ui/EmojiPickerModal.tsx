@@ -9,6 +9,7 @@ interface EmojiPickerModalProps {
   onEmojiClick: (emojiData: EmojiClickData) => void;
   onClose: () => void;
   onBackdropClick: (e: React.MouseEvent) => void;
+  customEmojis?: Array<{ name: string; url: string }>;
 }
 
 /**
@@ -19,6 +20,7 @@ export function EmojiPickerModal({
   onEmojiClick,
   onClose,
   onBackdropClick,
+  customEmojis,
 }: EmojiPickerModalProps) {
   if (!isOpen) return null;
 
@@ -40,6 +42,11 @@ export function EmojiPickerModal({
             }}
             skinTonesDisabled={false}
             lazyLoadEmojis={true}
+            customEmojis={customEmojis?.map((e) => ({
+              id: e.name,
+              names: [e.name],
+              imgUrl: e.url,
+            }))}
           />
         </div>
         <div className="p-2 border-t border-discord-dark-300">

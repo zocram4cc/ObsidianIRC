@@ -408,6 +408,11 @@ export class IRCClient {
     >
   > = new Map(); // Track active batches per server
 
+  private pendingExtJwt: Map<
+    string,
+    { token: string; target: string; service: string }
+  > = new Map(); // Track multi-part EXTJWT tokens
+
   private ourCaps: string[] = [
     "multi-prefix",
     "message-tags",
@@ -2550,21 +2555,36 @@ export class IRCClient {
         // EXTJWT <requested_target> <service_name> [*] <jwt_token>
         const requestedTarget = parv[0];
         const serviceName = parv[1];
-        // Check if there's a continuation marker (*)
-        let jwtToken: string;
+
+        let jwtTokenPart: string;
+        let isContinuation = false;
+
         if (parv[2] === "*") {
-          // Continuation format: EXTJWT target service * token
-          jwtToken = parv[3];
+          isContinuation = true;
+          jwtTokenPart = parv[3];
         } else {
-          // Normal format: EXTJWT target service token
-          jwtToken = parv[2];
+          jwtTokenPart = parv[2];
         }
-        this.triggerEvent("EXTJWT", {
-          serverId,
-          requestedTarget,
-          serviceName,
-          jwtToken,
-        });
+
+        const key = `${serverId}:${requestedTarget}:${serviceName}`;
+        const pending = this.pendingExtJwt.get(key) || {
+          token: "",
+          target: requestedTarget,
+          service: serviceName,
+        };
+        pending.token += jwtTokenPart;
+
+        if (isContinuation) {
+          this.pendingExtJwt.set(key, pending);
+        } else {
+          this.pendingExtJwt.delete(key);
+          this.triggerEvent("EXTJWT", {
+            serverId,
+            requestedTarget: pending.target,
+            serviceName: pending.service,
+            jwtToken: pending.token,
+          });
+        }
       }
     }
   }

@@ -119,6 +119,11 @@ interface Attachment {
   filename: string;
 }
 
+interface Emoji {
+  name: string;
+  url: string;
+}
+
 export const getChannelMessages = (serverId: string, channelId: string) => {
   const state = useStore.getState();
   const key = `${serverId}-${channelId}`;
@@ -475,8 +480,10 @@ export interface AppState {
   >; // batchId -> batch info
   activeBatches: Record<string, Record<string, BatchInfo>>; // serverId -> batchId -> batch info
   metadataFetchInProgress: Record<string, boolean>; // serverId -> is fetching own metadata
+  emojiFetchInProgress: Record<string, boolean>; // key -> is fetching
   userMetadataRequested: Record<string, Set<string>>; // serverId -> Set of usernames we've requested metadata for
   metadataChangeCounter: number; // Counter incremented on metadata changes for reactivity
+  customEmojis: Record<string, { emojis: Emoji[]; url: string }>; // serverId-channelName -> emojis + source url
   // WHOIS data cache
   whoisData: Record<string, Record<string, WhoisData>>; // serverId -> nickname -> whois data
   // Account registration state
@@ -698,6 +705,11 @@ export interface AppState {
   metadataUnsub: (serverId: string, keys: string[]) => void;
   metadataSubs: (serverId: string) => void;
   metadataSync: (serverId: string, target: string) => void;
+  fetchCustomEmojis: (
+    serverId: string,
+    channelName: string,
+    url: string,
+  ) => Promise<void>;
   sendRaw: (serverId: string, command: string) => void;
 }
 
@@ -757,8 +769,10 @@ const useStore = create<AppState>((set, get) => ({
   metadataBatches: {},
   activeBatches: {},
   metadataFetchInProgress: {},
+  emojiFetchInProgress: {},
   userMetadataRequested: {},
   metadataChangeCounter: 0,
+  customEmojis: {},
   whoisData: {},
   pendingRegistration: null,
   channelOrder: loadChannelOrder(),
@@ -2871,6 +2885,56 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
 
+  fetchCustomEmojis: async (serverId, channelName, url) => {
+    const key = `${serverId}-${channelName}`;
+    const state = get();
+
+    // Skip if already fetching
+    if (state.emojiFetchInProgress[key]) {
+      return;
+    }
+
+    // Skip only if we have emojis for this key AND the URL is identical
+    if (state.customEmojis[key] && state.customEmojis[key].url === url) {
+      return;
+    }
+
+    // Mark as in progress
+    set((state) => ({
+      emojiFetchInProgress: {
+        ...state.emojiFetchInProgress,
+        [key]: true,
+      },
+    }));
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const emojis = await response.json();
+      set((state) => ({
+        customEmojis: {
+          ...state.customEmojis,
+          [key]: { emojis, url },
+        },
+        emojiFetchInProgress: {
+          ...state.emojiFetchInProgress,
+          [key]: false,
+        },
+      }));
+    } catch (error) {
+      console.error(
+        `[FETCH_EMOJIS] Failed to fetch for ${channelName}:`,
+        error,
+      );
+      set((state) => ({
+        emojiFetchInProgress: {
+          ...state.emojiFetchInProgress,
+          [key]: false,
+        },
+      }));
+    }
+  },
+
   sendRaw: (serverId, command) => {
     ircClient.sendRaw(serverId, command);
   },
@@ -4727,6 +4791,7 @@ ircClient.on("ready", async ({ serverId, serverName, nickname }) => {
         "color",
         "display-name",
         "bot",
+        "emoji-list-url",
       ];
       useStore.getState().metadataSub(serverId, defaultKeys);
     } else {
@@ -5824,6 +5889,7 @@ ircClient.on("CAP_ACKNOWLEDGED", ({ serverId, key, capabilities }) => {
         "color",
         "display-name",
         "bot", // Subscribe to bot metadata for tooltip information
+        "emoji-list-url",
       ];
       console.log(
         "[CAP_ACKNOWLEDGED] Attempting to subscribe to default metadata keys:",
@@ -6936,6 +7002,13 @@ ircClient.on("METADATA", ({ serverId, target, key, visibility, value }) => {
       metadataChangeCounter: state.metadataChangeCounter + 1,
     };
   });
+
+  // Trigger fetch as a side effect outside of setState
+  if (key === "emoji-list-url" && value) {
+    useStore
+      .getState()
+      .fetchCustomEmojis(serverId, target.toLowerCase(), value);
+  }
 });
 
 ircClient.on(
@@ -7179,6 +7252,13 @@ ircClient.on(
         }),
       };
     });
+
+    // Trigger fetch as a side effect outside of setState
+    if (key === "emoji-list-url" && value) {
+      useStore
+        .getState()
+        .fetchCustomEmojis(serverId, target.toLowerCase(), value);
+    }
   },
 );
 

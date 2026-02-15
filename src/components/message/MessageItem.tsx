@@ -414,6 +414,7 @@ export const MessageItem = (props: MessageItemProps) => {
   } = props;
   const pmUserCache = useRef(new Map<string, User>());
   const EMPTY_MESSAGES = useRef<MessageType[]>([]).current;
+  const EMPTY_CUSTOM_EMOJIS = useRef<unknown[]>([]).current;
 
   const ircCurrentUser = ircClient.getCurrentUser(message.serverId);
   const isCurrentUser = ircCurrentUser?.username === message.userId;
@@ -565,6 +566,30 @@ export const MessageItem = (props: MessageItemProps) => {
   const enableMarkdownRendering = useStore(
     useCallback((state) => state.globalSettings.enableMarkdownRendering, []),
   );
+
+  // Get custom emojis for this channel
+  const customEmojis = useStore((state) => {
+    // Find channel name for this message
+    const server = state.servers.find((s) => s.id === message.serverId);
+    if (!server) return [];
+
+    // Find channel or private chat
+    let channelName = "";
+    const channel = server.channels.find((c) => c.id === message.channelId);
+    if (channel) {
+      channelName = channel.name;
+    } else {
+      const pc = server.privateChats?.find((p) => p.id === message.channelId);
+      if (pc) channelName = pc.username;
+    }
+
+    if (!channelName) return EMPTY_CUSTOM_EMOJIS;
+    return (
+      state.customEmojis[`${message.serverId}-${channelName.toLowerCase()}`]
+        ?.emojis || EMPTY_CUSTOM_EMOJIS
+    );
+  });
+
   const canRedact =
     !isSystem &&
     isCurrentUser &&
@@ -634,6 +659,7 @@ export const MessageItem = (props: MessageItemProps) => {
     showExternalContent,
     enableMarkdownRendering,
     message.id || message.msgid || "msg",
+    customEmojis,
   );
 
   // Create collapsible content wrapper
@@ -648,7 +674,8 @@ export const MessageItem = (props: MessageItemProps) => {
     message.content.trim() === message.content &&
     isUrlFromFilehost(message.content, server.filehost) &&
     (!!message.content.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ||
-      message.content.includes("/images/")); // check for backend upload URLs
+      message.content.includes("/images/") ||
+      message.content.includes("/files/")); // check for backend upload URLs
 
   // Check if message is just a GIF URL from GIPHY or Tenor
   const isGifUrl =
