@@ -2897,12 +2897,6 @@ const useStore = create<AppState>((set, get) => ({
       return;
     }
 
-    // Skip only if we have emojis for this key AND the URL is identical
-    if (state.customEmojis[key] && state.customEmojis[key].url === url) {
-      console.log(`[EMOJI_FETCH] URL unchanged for ${key}, skipping fetch.`);
-      return;
-    }
-
     // Mark as in progress
     set((state) => ({
       emojiFetchInProgress: {
@@ -2912,8 +2906,14 @@ const useStore = create<AppState>((set, get) => ({
     }));
 
     try {
-      const response = await fetch(url);
-      console.log(`[EMOJI_FETCH] HTTP Status: ${response.status} for ${url}`);
+      // Append cache-buster to ensure we bypass any WebView/browser caches
+      const cacheBuster = `_cb=${Date.now()}`;
+      const finalUrl = url.includes("?")
+        ? `${url}&${cacheBuster}`
+        : `${url}?${cacheBuster}`;
+
+      const response = await fetch(finalUrl);
+      console.log(`[EMOJI_FETCH] HTTP Status: ${response.status} for ${finalUrl}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const emojis = await response.json();
       console.log(
