@@ -13,6 +13,7 @@ import {
   FaInfoCircle,
   FaList,
   FaPenAlt,
+  FaPhone,
   FaSearch,
   FaThumbtack,
   FaTimes,
@@ -88,6 +89,38 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const overflowButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handlePhoneClick = () => {
+    if (!selectedServerId || (!selectedChannel && !selectedPrivateChat)) return;
+    const target = selectedChannel?.name || selectedPrivateChat?.username;
+    if (!target) return;
+
+        // Listen for the response from MeetServ
+
+        const onMsg = (data: { serverId: string; sender: string; message: string }) => {
+
+          if (data.serverId === selectedServerId && data.sender === "MeetServ" && data.message.includes("https://")) {
+        const urlMatch = data.message.match(/https:\/\/[^\s]+/);
+        if (urlMatch) {
+          const url = urlMatch[0];
+          // Open URL via Tauri or standard browser
+          if (window.__TAURI__) {
+            import("@tauri-apps/plugin-opener").then((m) => m.openUrl(url));
+          } else {
+            window.open(url, "_blank");
+          }
+          ircClient.deleteHook("USERMSG", onMsg);
+        }
+      }
+    };
+
+    ircClient.on("USERMSG", onMsg);
+    // Auto-remove hook after 10 seconds if no response
+    setTimeout(() => ircClient.deleteHook("USERMSG", onMsg), 10000);
+
+    // Send the request to MeetServ
+    ircClient.sendRaw(selectedServerId, `PRIVMSG MeetServ :JOIN ${target}`);
+  };
 
   const servers = useStore((state) => state.servers);
   const mobileViewActiveColumn = useStore(
@@ -603,6 +636,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       </div>
       {!!selectedServerId && selectedChannelId !== "server-notices" && (
         <div className="flex items-center gap-2 md:gap-4 text-discord-text-muted flex-shrink-0">
+          {/* Jitsi Call Button */}
+          <button
+            className="hover:text-white transition-colors"
+            onClick={handlePhoneClick}
+            title="Join Jitsi Call"
+            aria-label="Join Jitsi Call"
+          >
+            <FaPhone className="w-4 h-4" />
+          </button>
+
           {/* Bell - always visible */}
           <button
             className="hover:text-discord-text-normal"

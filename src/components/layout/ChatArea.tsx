@@ -3,7 +3,7 @@ import type { EmojiClickData } from "emoji-picker-react";
 import type * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FaGift, FaList, FaPlus, FaTimes } from "react-icons/fa";
+import { FaGift, FaList, FaPlus, FaTimes, FaUpload } from "react-icons/fa";
 import { v4 as uuidv4 } from "uuid";
 import { useEmojiCompletion } from "../../hooks/useEmojiCompletion";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -34,6 +34,7 @@ import ChannelSettingsModal from "../ui/ChannelSettingsModal";
 import ColorPicker from "../ui/ColorPicker";
 import EmojiAutocompleteDropdown from "../ui/EmojiAutocompleteDropdown";
 import { EmojiPickerModal } from "../ui/EmojiPickerModal";
+import FileUploader from "../ui/FileUploader";
 import GifSelector from "../ui/GifSelector";
 import DiscoverGrid from "../ui/HomeScreen";
 import { ImagePreviewModal } from "../ui/ImagePreviewModal";
@@ -49,6 +50,7 @@ import UserProfileModal from "../ui/UserProfileModal";
 import { ChatHeader } from "./ChatHeader";
 
 const EMPTY_ARRAY: User[] = [];
+const EMPTY_CUSTOM_EMOJIS: unknown[] = [];
 
 export const TypingIndicator: React.FC<{
   serverId: string;
@@ -426,6 +428,8 @@ export const ChatArea: React.FC<{
     selectedServerId,
     currentUser,
   });
+
+  const [isFileUploaderOpen, setIsFileUploaderOpen] = useState(false);
 
   // Get messages for current channel or private chat - memoized
   const channelKey = useMemo(
@@ -1367,6 +1371,13 @@ export const ChatArea: React.FC<{
     setIsEmojiSelectorOpen(false);
   };
 
+  const channelName = selectedChannel?.name || selectedPrivateChat?.username;
+  const channelCustomEmojis = useStore((state) => {
+    if (!selectedServerId || !channelName) return EMPTY_CUSTOM_EMOJIS;
+    const key = `${selectedServerId}-${channelName.toLowerCase()}`;
+    return state.customEmojis[key]?.emojis || EMPTY_CUSTOM_EMOJIS;
+  });
+
   const handleEmojiModalBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       setIsEmojiSelectorOpen(false);
@@ -1423,8 +1434,26 @@ export const ChatArea: React.FC<{
     isChannelRenameModalOpen,
   ]);
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setIsFileUploaderOpen(true);
+    }
+  }, []);
+
   return (
-    <div className="flex flex-col h-full">
+    <div
+      className="flex flex-col h-full"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {/* Channel header */}
       <ChatHeader
         selectedChannel={selectedChannel ?? null}
@@ -1684,28 +1713,12 @@ export const ChatArea: React.FC<{
                 <button
                   className="w-full text-left px-4 py-2 text-discord-text-normal hover:bg-discord-dark-300 rounded-lg flex items-center"
                   onClick={() => {
-                    // Handle image selection for preview
-                    const input = document.createElement("input");
-                    input.type = "file";
-                    input.accept = "image/*";
-                    input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) {
-                        // Create preview URL
-                        const previewUrl = URL.createObjectURL(file);
-                        setImagePreview({
-                          isOpen: true,
-                          file,
-                          previewUrl,
-                        });
-                      }
-                    };
-                    input.click();
+                    setIsFileUploaderOpen(true);
                     setShowPlusMenu(false);
                   }}
                 >
-                  <FaPlus className="mr-2" />
-                  Upload Image
+                  <FaUpload className="mr-2" />
+                  Upload File
                 </button>
               )}
               <button
@@ -1727,6 +1740,7 @@ export const ChatArea: React.FC<{
             onEmojiClick={handleEmojiSelect}
             onClose={() => setIsEmojiSelectorOpen(false)}
             onBackdropClick={handleEmojiModalBackdropClick}
+            customEmojis={channelCustomEmojis}
           />
 
           <GifSelector
@@ -1737,6 +1751,16 @@ export const ChatArea: React.FC<{
               handleGifSend(gifUrl);
               setIsGifSelectorOpen(false);
             }}
+          />
+
+          <FileUploader
+            isOpen={isFileUploaderOpen}
+            onClose={() => setIsFileUploaderOpen(false)}
+            serverId={selectedServerId || ""}
+            channelId={selectedChannel?.id || selectedPrivateChat?.id || ""}
+            channelName={
+              selectedChannel?.name || selectedPrivateChat?.username || ""
+            }
           />
 
           {isColorPickerOpen && (

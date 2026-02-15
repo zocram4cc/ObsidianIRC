@@ -43,31 +43,45 @@ const initializeEnvSettings = (
   joinChannel: (serverId: string, channelName: string) => void,
 ) => {
   if (loadSavedServers().length > 0) return;
-  const host = __DEFAULT_IRC_SERVER__
-    ? __DEFAULT_IRC_SERVER__.split(":")[1].replace(/^\/\//, "")
-    : undefined;
-  const port = __DEFAULT_IRC_SERVER__
-    ? __DEFAULT_IRC_SERVER__.split(":")[2]
-    : undefined;
+
+  // Use defensive checks for global variables injected by Vite
+  const defaultServer =
+    typeof __DEFAULT_IRC_SERVER__ !== "undefined"
+      ? __DEFAULT_IRC_SERVER__
+      : undefined;
+  const defaultServerName =
+    typeof __DEFAULT_IRC_SERVER_NAME__ !== "undefined"
+      ? __DEFAULT_IRC_SERVER_NAME__
+      : undefined;
+  const defaultChannels =
+    typeof __DEFAULT_IRC_CHANNELS__ !== "undefined"
+      ? __DEFAULT_IRC_CHANNELS__
+      : [];
+
+  if (!defaultServer) return;
+
+  const host = defaultServer.split(":")[1]?.replace(/^\/\//, "");
+  const port = defaultServer.split(":")[2];
+
   if (!host || !port) {
     return;
   }
-  if (!__DEFAULT_IRC_SERVER_NAME__) {
-  }
+
   toggleAddServerModal(true, {
-    name: __DEFAULT_IRC_SERVER_NAME__ || "Obsidian IRC",
+    name: defaultServerName || "Obsidian IRC",
     host,
     port,
     nickname: "",
     ui: {
       hideServerInfo: true,
       hideClose: true,
-      title: `Welcome to ${__DEFAULT_IRC_SERVER_NAME__}!`,
+      title: `Welcome to ${defaultServerName || "Obsidian IRC"}!`,
     },
   });
+
   ircClient.on("ready", ({ serverId, serverName, nickname }) => {
     // Automatically join default channels
-    for (const channel of __DEFAULT_IRC_CHANNELS__) {
+    for (const channel of defaultChannels) {
       joinChannel(serverId, channel);
     }
   });
