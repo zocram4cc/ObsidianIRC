@@ -28,6 +28,7 @@ tauri-plugin-os = "2.3"
 tauri-plugin-deep-link = "2.4"
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
 base64 = "0.22"
+tauri-plugin-opener = "2.0.0"
 
 # Use rustls for Android, native-tls for other platforms
 [target.'cfg(not(target_os = "android"))'.dependencies]

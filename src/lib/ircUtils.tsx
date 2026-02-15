@@ -432,6 +432,7 @@ export function processMarkdownInText(
   showExternalContent = true,
   enableMarkdown = false,
   keyPrefix = "",
+  customEmojis: Array<{ name: string; url: string }> = [],
 ): React.ReactNode {
   // Check if text contains markdown syntax patterns
   const markdownPatterns = [
@@ -456,13 +457,19 @@ export function processMarkdownInText(
 
   if (hasMarkdown && enableMarkdown) {
     // If markdown syntax is detected and markdown is enabled, render the entire text as markdown
+    // Note: We'll need to post-process markdown output if we want emojis there too,
+    // but for now let's focus on non-markdown messages.
     return renderMarkdown(text, showExternalContent);
   }
   // Otherwise, use the existing IRC formatting
-  return mircToHtml(text, keyPrefix);
+  return mircToHtml(text, keyPrefix, customEmojis);
 }
 
-export function mircToHtml(text: string, keyPrefix = ""): React.ReactNode {
+export function mircToHtml(
+  text: string,
+  keyPrefix = "",
+  customEmojis: Array<{ name: string; url: string }> = [],
+): React.ReactNode {
   const state = {
     bold: false,
     underline: false,
@@ -580,13 +587,24 @@ export function mircToHtml(text: string, keyPrefix = ""): React.ReactNode {
     if (React.isValidElement(node) && node.type === "span") {
       const textContent = node.props.children;
       if (typeof textContent === "string") {
-        const urlProcessed = processUrlsInText(
-          textContent,
-          node.props.style,
-          keyPrefix,
-          elementIndexRef,
-        );
-        processedResult.push(...urlProcessed);
+        // First, replace custom emojis
+        const emojiProcessed = replaceCustomEmojis(textContent, customEmojis);
+
+        // Then, process URLs in any remaining string parts
+        for (const part of emojiProcessed) {
+          if (typeof part === "string") {
+            const urlProcessed = processUrlsInText(
+              part,
+              node.props.style,
+              keyPrefix,
+              elementIndexRef,
+            );
+            processedResult.push(...urlProcessed);
+          } else {
+            // Already a React element (img), push directly
+            processedResult.push(part);
+          }
+        }
       } else {
         processedResult.push(node);
       }
@@ -776,6 +794,63 @@ export function isUrlFromFilehost(
     // If URL parsing fails, fall back to false
     return false;
   }
+}
+
+export function replaceCustomEmojis(
+  text: string,
+  customEmojis: Array<{ name: string; url: string }>,
+): React.ReactNode[] {
+  if (!customEmojis || customEmojis.length === 0) {
+    return [text];
+  }
+
+  // Sort by name length descending to prevent partial matches (e.g., :smile: before :smile_face:)
+  const sortedEmojis = [...customEmojis].sort(
+    (a, b) => b.name.length - a.name.length,
+  );
+
+  // Create a regex that matches any of the custom emoji names wrapped in colons
+  const emojiNames = sortedEmojis.map((e) =>
+    e.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  );
+  const regex = new RegExp(`:(${emojiNames.join("|")}):`, "g");
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = regex.exec(text);
+
+  while (match !== null) {
+    // Add text before the emoji
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    const emojiName = match[1];
+    const emoji = sortedEmojis.find((e) => e.name === emojiName);
+
+    if (emoji) {
+      parts.push(
+        <img
+          key={`emoji-${match.index}`}
+          src={emoji.url}
+          alt={`:${emojiName}:`}
+          title={`:${emojiName}:`}
+          className="inline-block h-[1.2em] w-auto align-middle mx-0.5"
+          style={{ verticalAlign: "text-bottom" }}
+        />,
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+    match = regex.exec(text);
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
 }
 
 /**
