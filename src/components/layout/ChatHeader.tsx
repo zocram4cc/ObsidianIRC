@@ -95,11 +95,18 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     const target = selectedChannel?.name || selectedPrivateChat?.username;
     if (!target) return;
 
-        // Listen for the response from MeetServ
+    // Listen for the response from MeetServ
 
-        const onMsg = (data: { serverId: string; sender: string; message: string }) => {
-
-          if (data.serverId === selectedServerId && data.sender === "MeetServ" && data.message.includes("https://")) {
+    const onMsg = (data: {
+      serverId: string;
+      sender: string;
+      message: string;
+    }) => {
+      if (
+        data.serverId === selectedServerId &&
+        data.sender === "MeetServ" &&
+        data.message.includes("https://")
+      ) {
         const urlMatch = data.message.match(/https:\/\/[^\s]+/);
         if (urlMatch) {
           const url = urlMatch[0];
