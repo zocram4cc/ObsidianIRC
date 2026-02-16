@@ -433,6 +433,7 @@ export class IRCClient {
     "draft/metadata-2",
     "draft/message-redaction",
     "draft/account-registration",
+    "draft/react",
     "batch",
     "draft/multiline",
     "draft/typing",
