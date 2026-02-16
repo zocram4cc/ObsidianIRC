@@ -404,6 +404,13 @@ interface UIState {
   serverShimmer?: Set<string>; // Set of server IDs that should show shimmer
   // Request focus on chat input (used when closing modals)
   shouldFocusChatInput: boolean;
+  // Lightbox state
+  lightbox?: {
+    isOpen: boolean;
+    url: string;
+    author?: string;
+    timestamp?: Date;
+  } | null;
 }
 
 export type { GlobalSettings };
@@ -711,6 +718,9 @@ export interface AppState {
     url: string,
   ) => Promise<void>;
   sendRaw: (serverId: string, command: string) => void;
+  // Lightbox actions
+  openLightbox: (url: string, author?: string, timestamp?: Date) => void;
+  closeLightbox: () => void;
 }
 
 // Helper functions for per-server tab selections
@@ -822,6 +832,8 @@ const useStore = create<AppState>((set, get) => ({
     settingsNavigation: null,
     // Chat input focus request
     shouldFocusChatInput: false,
+    // Lightbox state
+    lightbox: null,
   },
   globalSettings: {
     enableNotifications: false,
@@ -850,9 +862,12 @@ const useStore = create<AppState>((set, get) => ({
     autoFallbackToSingleLine: true,
     // Media settings
     showSafeMedia: true,
-    showExternalContent: false,
+    showExternalContent: true,
     // Markdown settings
     enableMarkdownRendering: false,
+    // Appearance settings
+    chatFontScaling: 16, // Default font size in px
+    uiScaling: 100, // Default UI scale in percentage
     // Status messages
     awayMessage: "",
     quitMessage: "ObsidianIRC - Bringing IRC to the future",
@@ -2913,7 +2928,9 @@ const useStore = create<AppState>((set, get) => ({
         : `${url}?${cacheBuster}`;
 
       const response = await fetch(finalUrl);
-      console.log(`[EMOJI_FETCH] HTTP Status: ${response.status} for ${finalUrl}`);
+      console.log(
+        `[EMOJI_FETCH] HTTP Status: ${response.status} for ${finalUrl}`,
+      );
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const emojis = await response.json();
       console.log(
@@ -2942,6 +2959,29 @@ const useStore = create<AppState>((set, get) => ({
 
   sendRaw: (serverId, command) => {
     ircClient.sendRaw(serverId, command);
+  },
+
+  openLightbox: (url, author, timestamp) => {
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        lightbox: {
+          isOpen: true,
+          url,
+          author,
+          timestamp,
+        },
+      },
+    }));
+  },
+
+  closeLightbox: () => {
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        lightbox: null,
+      },
+    }));
   },
 
   capAck: (serverId, key, capabilities) => {

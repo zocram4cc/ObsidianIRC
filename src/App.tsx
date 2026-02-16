@@ -13,6 +13,7 @@ import AddServerModal from "./components/ui/AddServerModal";
 import ChannelListModal from "./components/ui/ChannelListModal";
 import ChannelRenameModal from "./components/ui/ChannelRenameModal";
 import { EditServerModal } from "./components/ui/EditServerModal";
+import LightboxModal from "./components/ui/LightboxModal";
 import LinkSecurityWarningModal from "./components/ui/LinkSecurityWarningModal";
 import LoadingOverlay from "./components/ui/LoadingOverlay";
 import QuickActions from "./components/ui/QuickActions";
@@ -250,8 +251,31 @@ const App: React.FC = () => {
     };
   }, [toggleQuickActions]);
 
+  // Apply UI scaling
+  const uiScaling = useStore((state) => state.globalSettings.uiScaling);
+  const scale = uiScaling && uiScaling > 0 ? uiScaling : 100;
+
+  // Use useEffect only to ensure html/body stay at 100% and dark
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const html = document.documentElement;
+      const body = document.body;
+      html.style.height = "100%";
+      html.style.width = "100%";
+      html.style.overflow = "hidden";
+      body.style.height = "100%";
+      body.style.width = "100%";
+      body.style.margin = "0";
+      body.style.overflow = "hidden";
+      body.style.backgroundColor = "#313338"; // discord-dark-300
+    }
+  }, []);
+
   return (
-    <div className="h-screen overflow-hidden">
+    <div
+      className="h-full w-full overflow-hidden"
+      style={{ zoom: `${scale}%` } as React.CSSProperties}
+    >
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route
@@ -271,6 +295,7 @@ const App: React.FC = () => {
               {isChannelListModalOpen && <ChannelListModal />}
               {isChannelRenameModalOpen && <ChannelRenameModal />}
               <LinkSecurityWarningModal />
+              <LightboxModal />
               {userProfileModalState?.isOpen && (
                 <UserProfileModal
                   isOpen={userProfileModalState.isOpen}

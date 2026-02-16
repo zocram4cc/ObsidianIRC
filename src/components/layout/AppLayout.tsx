@@ -105,7 +105,7 @@ export const AppLayout: React.FC = () => {
                   <ServerList />
                 </div>
               )}
-              <div className="w-[calc(100vw-72px)] h-full bg-discord-dark-100">
+              <div className="w-[calc(100%-72px)] h-full bg-discord-dark-100">
                 <ChannelList
                   onToggle={() => toggleChannelList(!isChannelListVisible)}
                 />
@@ -235,7 +235,7 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div
-      className={`flex h-screen overflow-hidden bg-discord-dark-300 ${
+      className={`flex h-full overflow-hidden bg-discord-dark-300 ${
         isDarkMode ? "text-white" : "text-gray-900"
       }`}
       style={{
@@ -260,7 +260,7 @@ export const AppLayout: React.FC = () => {
           <div
             className="flex h-full"
             style={{
-              transform: `translateX(calc(-${currentPageIndex * 100}vw + ${offset}px))`,
+              transform: `translateX(calc(-${currentPageIndex * 100}% + ${offset}px))`,
               transition: isTransitioning
                 ? "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
                 : "none",
@@ -272,7 +272,7 @@ export const AppLayout: React.FC = () => {
               <div
                 key={column}
                 className="h-full flex-shrink-0"
-                style={{ width: "100vw" }}
+                style={{ width: "100%" }}
                 data-swipe-page={column}
               >
                 {getLayoutColumnElement(column)}

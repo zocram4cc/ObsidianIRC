@@ -48,9 +48,15 @@
   max-width: 100px;
 }
 
+html, body, #root {
+  height: 100%;
+}
+
 body {
   font-family: "Roboto Mono", monospace;
   width: 100%;
+  margin: 0;
+  background-color: #313338; /* discord-dark-300 */
 }
 
 /* iOS safe area support for modals */
@@ -130,8 +136,8 @@ body {
   }
   
   #root {
-    height: 100vh;
-    height: calc(100vh - var(--keyboard-height, 0px));
+    height: 100%;
+    height: calc(100% - var(--keyboard-height, 0px));
     transition: height 0.2s ease-in-out;
     position: relative;
   }
@@ -141,7 +147,7 @@ body {
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari specific adjustments */
   #root {
-    height: 100vh;
+    height: 100%;
     height: -webkit-fill-available;
   }
 }
