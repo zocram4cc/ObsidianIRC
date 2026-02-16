@@ -1,4 +1,5 @@
 import type React from "react";
+import useStore from "../../store";
 import type { MessageType, User } from "../../types";
 import { MessageAvatar } from "./MessageAvatar";
 
@@ -39,6 +40,10 @@ export const ActionMessage: React.FC<ActionMessageProps> = ({
   const displayName = messageUser?.metadata?.["display-name"]?.value;
   const username = message.userId.split("-")[0];
 
+  const chatFontScaling = useStore(
+    (state) => state.globalSettings.chatFontScaling,
+  );
+
   return (
     <div className="px-4 py-1 hover:bg-discord-message-hover group">
       {showDate && (
@@ -74,7 +79,10 @@ export const ActionMessage: React.FC<ActionMessageProps> = ({
               {formatTime(new Date(message.timestamp))}
             </span>
           </div>
-          <span className="italic text-white">
+          <span
+            className="italic text-white"
+            style={{ fontSize: `${chatFontScaling}px` }}
+          >
             {message.userId === "system"
               ? "System"
               : (displayName || username) +

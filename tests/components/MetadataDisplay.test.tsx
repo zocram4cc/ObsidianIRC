@@ -168,6 +168,8 @@ describe("Metadata Display Features", () => {
       },
       typingUsers: {},
       globalSettings: {
+        chatFontScaling: 16,
+        uiScaling: 100,
         enableNotifications: true,
         notificationSound: "pop",
         notificationVolume: 0.8,

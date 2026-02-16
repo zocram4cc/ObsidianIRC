@@ -1,5 +1,6 @@
 import type React from "react";
 import { processMarkdownInText } from "../../lib/ircUtils";
+import useStore from "../../store";
 import type { MessageType, User } from "../../types";
 import { EnhancedLinkWrapper } from "../ui/LinkWrapper";
 import { MessageActions } from "./MessageActions";
@@ -104,6 +105,10 @@ export const WhisperMessage: React.FC<WhisperMessageProps> = ({
   const recipient = message.whisperTarget || "unknown";
   const isOutgoing = ircCurrentUser?.username === sender;
 
+  const chatFontScaling = useStore(
+    (state) => state.globalSettings.chatFontScaling,
+  );
+
   return (
     <div data-message-id={message.id} className="px-4 py-1 group relative">
       {/* Whisper container with special styling */}
@@ -158,7 +163,14 @@ export const WhisperMessage: React.FC<WhisperMessageProps> = ({
 
             <div className="relative">
               <EnhancedLinkWrapper onIrcLinkClick={onIrcLinkClick}>
-                <div style={{ whiteSpace: "pre-wrap" }}>{htmlContent}</div>
+                <div
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontSize: `${chatFontScaling}px`,
+                  }}
+                >
+                  {htmlContent}
+                </div>
               </EnhancedLinkWrapper>
             </div>
 

@@ -6,6 +6,8 @@ export VITE_DEFAULT_IRC_SERVER=${VITE_DEFAULT_IRC_SERVER:-"wss://www.ilex-forest
 export VITE_DEFAULT_IRC_SERVER_NAME=${VITE_DEFAULT_IRC_SERVER_NAME:-"Ilex Forest"}
 export VITE_DEFAULT_IRC_CHANNELS=${VITE_DEFAULT_IRC_CHANNELS:-"#ilex-forest"}
 export VITE_HIDE_SERVER_LIST=${VITE_HIDE_SERVER_LIST:-"false"}
+export VITE_GIPHY_API_KEY=${VITE_GIPHY_API_KEY:-"REDACTED"}
+
 
 echo "Building ObsidianIRC for Web..."
 # Assuming script is run from project root or handles its own directory
