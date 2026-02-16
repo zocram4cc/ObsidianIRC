@@ -9,6 +9,7 @@ import {
   FaBell,
   FaCog,
   FaImage,
+  FaPalette,
   FaServer,
   FaShieldAlt,
   FaTimes,
@@ -78,6 +79,7 @@ const deepEqual = (a: unknown, b: unknown): boolean => {
 
 type SettingsCategory =
   | "profile"
+  | "appearance"
   | "notifications"
   | "preferences"
   | "media"
@@ -97,6 +99,12 @@ const categories: CategoryInfo[] = [
     title: "Profile",
     icon: <FaUser className="w-5 h-5" />,
     description: "Manage your profile information and metadata",
+  },
+  {
+    id: "appearance",
+    title: "Appearance",
+    icon: <FaPalette className="w-5 h-5" />,
+    description: "Customize the look and feel",
   },
   {
     id: "notifications",
@@ -291,6 +299,10 @@ export const UserSettings: React.FC = React.memo(() => {
   const [awayMessage, setAwayMessage] = useState("");
   const [quitMessage, setQuitMessage] = useState("");
 
+  // Scaling state
+  const [chatFontScaling, setChatFontScaling] = useState(16);
+  const [uiScaling, setUiScaling] = useState(100);
+
   // Original values for change tracking
   const [originalValues, setOriginalValues] = useState<Record<
     string,
@@ -393,6 +405,11 @@ export const UserSettings: React.FC = React.memo(() => {
     setAwayMessage(initialAwayMessage);
     setQuitMessage(initialQuitMessage);
 
+    const initialChatFontScaling = globalSettings.chatFontScaling || 16;
+    const initialUiScaling = globalSettings.uiScaling || 100;
+    setChatFontScaling(initialChatFontScaling);
+    setUiScaling(initialUiScaling);
+
     setOriginalValues({
       ...deepClone(initialSettings),
       avatar: initialAvatar,
@@ -408,6 +425,8 @@ export const UserSettings: React.FC = React.memo(() => {
       operOnConnect: initialOperOnConnect,
       awayMessage: initialAwayMessage,
       quitMessage: initialQuitMessage,
+      chatFontScaling: initialChatFontScaling,
+      uiScaling: initialUiScaling,
     });
   }, [
     ui.isSettingsModalOpen,
@@ -421,8 +440,8 @@ export const UserSettings: React.FC = React.memo(() => {
   const hasUnsavedChanges = useMemo(() => {
     if (!originalValues) return false;
 
-    // Check profile metadata
-    if (
+    // Check profile metadata and scaling with explicit number conversion for safety
+    const isChanged =
       avatar !== originalValues.avatar ||
       displayName !== originalValues.displayName ||
       realname !== originalValues.realname ||
@@ -435,8 +454,15 @@ export const UserSettings: React.FC = React.memo(() => {
       operPassword !== originalValues.operPassword ||
       operOnConnect !== originalValues.operOnConnect ||
       awayMessage !== originalValues.awayMessage ||
-      quitMessage !== originalValues.quitMessage
-    ) {
+      quitMessage !== originalValues.quitMessage ||
+      Number(chatFontScaling) !== Number(originalValues.chatFontScaling) ||
+      Number(uiScaling) !== Number(originalValues.uiScaling);
+
+    if (isChanged) {
+      console.log("🛠️ Settings Changed:", {
+        chat: `${originalValues.chatFontScaling} -> ${chatFontScaling}`,
+        ui: `${originalValues.uiScaling} -> ${uiScaling}`,
+      });
       return true;
     }
 
@@ -464,6 +490,8 @@ export const UserSettings: React.FC = React.memo(() => {
     operOnConnect,
     awayMessage,
     quitMessage,
+    chatFontScaling,
+    uiScaling,
   ]);
 
   const handleSettingChange = useCallback(
@@ -670,6 +698,8 @@ export const UserSettings: React.FC = React.memo(() => {
       ...(settings as Partial<GlobalSettings>),
       awayMessage,
       quitMessage,
+      chatFontScaling,
+      uiScaling,
     });
 
     // Save notification sound file
@@ -720,6 +750,8 @@ export const UserSettings: React.FC = React.memo(() => {
     updateServer,
     toggleSettingsModal,
     originalValues,
+    chatFontScaling,
+    uiScaling,
   ]);
 
   // Handle close
@@ -735,6 +767,164 @@ export const UserSettings: React.FC = React.memo(() => {
     setOriginalValues(null);
     toggleSettingsModal(false);
   }, [hasUnsavedChanges, toggleSettingsModal]);
+
+  const renderAppearanceFields = () => {
+    const fontSizes = [12, 14, 15, 16, 18, 20, 24];
+    const uiScales = [80, 90, 100, 110, 125, 150];
+
+    return (
+      <div className="space-y-8">
+        <div>
+          <h3 className="text-white text-sm font-semibold uppercase mb-4 tracking-wider">
+            Scaling
+          </h3>
+
+          <div className="space-y-6">
+            {/* Chat Font Scaling */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-discord-text-normal font-medium">
+                  Chat Font Scaling
+                </label>
+                <p className="text-discord-text-muted text-sm">
+                  Increase or decrease the size of the chat font
+                </p>
+              </div>
+
+              <div className="px-2 pt-6 pb-2">
+                <div className="relative h-1 bg-discord-dark-400 rounded-full">
+                  <div
+                    className="absolute h-full bg-discord-primary rounded-full"
+                    style={{
+                      width: `${((chatFontScaling - 12) / (24 - 12)) * 100}%`,
+                    }}
+                  />
+                  <input
+                    type="range"
+                    min="12"
+                    max="24"
+                    step="1"
+                    value={chatFontScaling}
+                    onChange={(e) =>
+                      setChatFontScaling(Number.parseInt(e.target.value, 10))
+                    }
+                    className="absolute inset-0 w-full h-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-sm [&::-webkit-slider-thumb]:shadow-lg"
+                  />
+
+                  {/* Ticks and Labels */}
+                  <div className="absolute top-[-24px] left-0 right-0 h-4 pointer-events-none">
+                    {fontSizes.map((size) => (
+                      <span
+                        key={size}
+                        className={`absolute text-[10px] font-bold -translate-x-1/2 ${chatFontScaling === size ? "text-green-400" : "text-discord-text-muted"}`}
+                        style={{ left: `${((size - 12) / (24 - 12)) * 100}%` }}
+                      >
+                        {size}px
+                      </span>
+                    ))}
+                  </div>
+                  <div className="absolute top-0 left-0 right-0 flex pointer-events-none">
+                    {fontSizes.map((size) => (
+                      <div
+                        key={size}
+                        className="absolute w-px h-2 bg-discord-dark-500 mt-[-0.5px]"
+                        style={{ left: `${((size - 12) / (24 - 12)) * 100}%` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* UI Scaling */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-discord-text-normal font-medium">
+                  Interface Scaling
+                </label>
+                <p className="text-discord-text-muted text-sm">
+                  Adjust the overall size of the user interface
+                </p>
+              </div>
+
+              <div className="px-2 pt-6 pb-2">
+                <div className="relative h-1 bg-discord-dark-400 rounded-full">
+                  <div
+                    className="absolute h-full bg-discord-primary rounded-full"
+                    style={{
+                      width: `${((uiScaling - 80) / (150 - 80)) * 100}%`,
+                    }}
+                  />
+                  <input
+                    type="range"
+                    min="80"
+                    max="150"
+                    step="5"
+                    value={uiScaling}
+                    onChange={(e) =>
+                      setUiScaling(Number.parseInt(e.target.value, 10))
+                    }
+                    className="absolute inset-0 w-full h-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-sm [&::-webkit-slider-thumb]:shadow-lg"
+                  />
+
+                  {/* Ticks and Labels */}
+                  <div className="absolute top-[-24px] left-0 right-0 h-4 pointer-events-none">
+                    {uiScales.map((scale) => (
+                      <span
+                        key={scale}
+                        className={`absolute text-[10px] font-bold -translate-x-1/2 ${uiScaling === scale ? "text-green-400" : "text-discord-text-muted"}`}
+                        style={{
+                          left: `${((scale - 80) / (150 - 80)) * 100}%`,
+                        }}
+                      >
+                        {scale}%
+                      </span>
+                    ))}
+                  </div>
+                  <div className="absolute top-0 left-0 right-0 flex pointer-events-none">
+                    {uiScales.map((scale) => (
+                      <div
+                        key={scale}
+                        className="absolute w-px h-2 bg-discord-dark-500 mt-[-0.5px]"
+                        style={{
+                          left: `${((scale - 80) / (150 - 80)) * 100}%`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Preview Section */}
+        <div className="mt-8 p-4 bg-discord-dark-400 rounded-lg border border-discord-dark-500">
+          <h4 className="text-discord-text-muted text-xs font-bold uppercase mb-3">
+            Preview
+          </h4>
+          <div className="flex gap-3">
+            <div className="w-10 h-10 rounded-full bg-discord-primary flex-shrink-0" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-medium">User</span>
+                <span className="text-discord-text-muted text-xs">
+                  Today at 12:00 PM
+                </span>
+              </div>
+              <p
+                className="text-discord-text-normal"
+                style={{ fontSize: `${chatFontScaling}px` }}
+              >
+                This is how your chat messages will look with the current font
+                size setting.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render privacy settings
   const renderPrivacyFields = () => {
@@ -1270,6 +1460,9 @@ export const UserSettings: React.FC = React.memo(() => {
           <div className="flex-1 overflow-y-auto p-6">
             {/* Profile category - custom rendering */}
             {activeCategory === "profile" && renderProfileFields()}
+
+            {/* Appearance category - custom rendering */}
+            {activeCategory === "appearance" && renderAppearanceFields()}
 
             {/* Account category - custom rendering */}
             {activeCategory === "account" && renderAccountFields()}

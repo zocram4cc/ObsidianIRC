@@ -62,7 +62,7 @@ const GifSelector: React.FC<GifSelectorProps> = ({
 
       if (activeProvider === "giphy") {
         // GIPHY API
-        apiKey = import.meta.env.VITE_GIPHY_API_KEY || ""; // You'll need to set this
+        apiKey = __GIPHY_API_KEY__;
         apiUrl = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(searchQuery)}&limit=20&rating=g`;
       } else {
         // Tenor API
@@ -172,16 +172,6 @@ const GifSelector: React.FC<GifSelectorProps> = ({
               onClick={() => setActiveProvider("giphy")}
             >
               GIPHY
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                activeProvider === "tenor"
-                  ? "bg-discord-blue text-white"
-                  : "bg-discord-dark-200 text-discord-text-muted hover:text-white"
-              }`}
-              onClick={() => setActiveProvider("tenor")}
-            >
-              Tenor
             </button>
           </div>
         </div>

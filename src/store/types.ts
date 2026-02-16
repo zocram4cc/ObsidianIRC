@@ -49,6 +49,8 @@ export interface GlobalSettings {
   showSafeMedia: boolean;
   showExternalContent: boolean;
   enableMarkdownRendering: boolean;
+  chatFontScaling: number;
+  uiScaling: number;
   awayMessage: string;
   quitMessage: string;
 }

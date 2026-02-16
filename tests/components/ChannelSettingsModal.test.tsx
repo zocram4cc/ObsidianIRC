@@ -81,6 +81,8 @@ describe("ChannelSettingsModal", () => {
     privateChats: [],
     ignoredUsers: [],
     globalSettings: {
+      chatFontScaling: 16,
+      uiScaling: 100,
       enableNotifications: true,
       notificationSound: "default",
       notificationVolume: 0.8,

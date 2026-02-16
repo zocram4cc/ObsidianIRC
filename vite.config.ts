@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => {
       '__DEFAULT_IRC_CHANNELS__': process.env.VITE_DEFAULT_IRC_CHANNELS ? process.env.VITE_DEFAULT_IRC_CHANNELS.replace(/^['"]|['"]$/g, '').split(',').map(ch => ch.trim()) : [],
       '__HIDE_SERVER_LIST__': process.env.VITE_HIDE_SERVER_LIST === 'true',
       '__BACKEND_URL__': JSON.stringify(process.env.VITE_BACKEND_URL || 'http://localhost:8080'),
+      '__GIPHY_API_KEY__': JSON.stringify(process.env.VITE_GIPHY_API_KEY || ''),
     },
     // prevent vite from obscuring rust errors
     clearScreen: false,

@@ -115,7 +115,6 @@ export const ChannelList: React.FC<{
   const servers = useStore((state) => state.servers);
 
   const [isTextChannelsOpen, setIsTextChannelsOpen] = useState(true);
-  const [isVoiceChannelsOpen, setIsVoiceChannelsOpen] = useState(true);
   const [isPrivateChatsOpen, setIsPrivateChatsOpen] = useState(true);
   const [newChannelName, setNewChannelName] = useState("");
   const [isAddPrivateChatModalOpen, setIsAddPrivateChatModalOpen] =
@@ -809,15 +808,6 @@ export const ChannelList: React.FC<{
                     ))}
                 </div>
               )}
-            </div>
-
-            {/* Voice Channels */}
-            <div className="px-2 mb-2">
-              <div className="w-full flex items-center justify-center bg-discord-dark-400 rounded px-2 py-0.5 leading-none">
-                <span className="text-[10px] text-discord-text-muted italic">
-                  Voice Channels coming soon!
-                </span>
-              </div>
             </div>
 
             {/* Private Messages */}

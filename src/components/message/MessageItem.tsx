@@ -132,7 +132,16 @@ const ImageWithFallback: React.FC<{
   isFilehostImage?: boolean;
   serverId?: string;
   onOpenProfile?: (username: string) => void;
-}> = ({ url, isFilehostImage = false, serverId, onOpenProfile }) => {
+  timestamp?: Date;
+  author?: string;
+}> = ({
+  url,
+  isFilehostImage = false,
+  serverId,
+  onOpenProfile,
+  timestamp,
+  author,
+}) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
@@ -142,6 +151,8 @@ const ImageWithFallback: React.FC<{
     server_expiry?: string;
   } | null>(null);
   const [exifError, setExifError] = useState(false);
+
+  const { openLightbox } = useStore();
 
   // Simple in-memory cache for images per session
   const imageCache = useRef<Map<string, string>>(new Map());
@@ -303,7 +314,8 @@ const ImageWithFallback: React.FC<{
           className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
           onClick={(e) => {
             e.preventDefault();
-            window.open(url, "_blank"); // Always open original URL for sharing
+            // Open the lightbox with our metadata
+            openLightbox(url, author, timestamp);
           }}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
@@ -567,6 +579,9 @@ export const MessageItem = (props: MessageItemProps) => {
   );
   const enableMarkdownRendering = useStore(
     useCallback((state) => state.globalSettings.enableMarkdownRendering, []),
+  );
+  const chatFontScaling = useStore(
+    useCallback((state) => state.globalSettings.chatFontScaling, []),
   );
 
   // Get custom emojis for this channel
@@ -967,6 +982,8 @@ export const MessageItem = (props: MessageItemProps) => {
                   isFilehostImage={isImageUrl}
                   serverId={message.serverId}
                   onOpenProfile={onOpenProfile}
+                  author={message.userId}
+                  timestamp={message.timestamp}
                 />
               ) : (
                 <div
@@ -975,6 +992,7 @@ export const MessageItem = (props: MessageItemProps) => {
                     whiteSpace: "pre-wrap",
                     overflowWrap: "break-word",
                     wordBreak: "break-word",
+                    fontSize: `${chatFontScaling}px`,
                   }}
                 >
                   {collapsibleContent}

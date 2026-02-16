@@ -45,6 +45,9 @@ const mockStoreState = {
   },
   globalNotifications: [],
   globalSettings: {
+    chatFontScaling: 16,
+    uiScaling: 100,
+    enableNotifications: true,
     enableNotificationSounds: true,
     notificationSound: "/sounds/notif1.mp3",
     notificationVolume: 0.8,
