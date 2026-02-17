@@ -1,4 +1,4 @@
-# https://obsidianirc.github.io
+# https://zocram4cc.github.io
 
 name: Deploy to GitHub Pages
 
@@ -18,12 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        run: npm install && npm run build
+        run: |
+          export VITE_GIPHY_API_KEY=${{ secrets.VITE_GIPHY_API_KEY }}
+          npm install && npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: ./dist
-          external_repository: obsidianirc/obsidianirc.github.io
+          external_repository: zocram4cc/zocram4cc.github.io
           publish_branch: main
