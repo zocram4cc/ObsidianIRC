@@ -868,6 +868,7 @@ const useStore = create<AppState>((set, get) => ({
     // Appearance settings
     chatFontScaling: 16, // Default font size in px
     uiScaling: 100, // Default UI scale in percentage
+    customCSS: "",
     // Status messages
     awayMessage: "",
     quitMessage: "ObsidianIRC - Bringing IRC to the future",
