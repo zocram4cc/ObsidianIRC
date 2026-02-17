@@ -190,6 +190,7 @@ describe("Metadata Display Features", () => {
         showSafeMedia: true,
         showExternalContent: true,
         enableMarkdownRendering: false,
+        customCSS: "",
         awayMessage: "",
         quitMessage: "ObsidianIRC - Bringing IRC to the future",
       },

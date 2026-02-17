@@ -839,6 +839,8 @@ const useStore = create<AppState>((set, get) => ({
     showExternalContent: false,
     // Markdown settings
     enableMarkdownRendering: false,
+    // Custom CSS
+    customCSS: "",
     // Status messages
     awayMessage: "",
     quitMessage: "ObsidianIRC - Bringing IRC to the future",

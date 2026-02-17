@@ -49,6 +49,7 @@ export interface GlobalSettings {
   showSafeMedia: boolean;
   showExternalContent: boolean;
   enableMarkdownRendering: boolean;
+  customCSS: string;
   awayMessage: string;
   quitMessage: string;
 }
