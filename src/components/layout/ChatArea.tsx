@@ -3,7 +3,7 @@ import type { EmojiClickData } from "emoji-picker-react";
 import type * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FaGift, FaList, FaPlus, FaTimes, FaUpload } from "react-icons/fa";
+import { FaGift, FaList, FaPlus, FaTimes } from "react-icons/fa";
 import { v4 as uuidv4 } from "uuid";
 import { useEmojiCompletion } from "../../hooks/useEmojiCompletion";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -34,7 +34,6 @@ import ChannelSettingsModal from "../ui/ChannelSettingsModal";
 import ColorPicker from "../ui/ColorPicker";
 import EmojiAutocompleteDropdown from "../ui/EmojiAutocompleteDropdown";
 import { EmojiPickerModal } from "../ui/EmojiPickerModal";
-import FileUploader from "../ui/FileUploader";
 import GifSelector from "../ui/GifSelector";
 import DiscoverGrid from "../ui/HomeScreen";
 import { ImagePreviewModal } from "../ui/ImagePreviewModal";
@@ -429,7 +428,6 @@ export const ChatArea: React.FC<{
     currentUser,
   });
 
-  const [isFileUploaderOpen, setIsFileUploaderOpen] = useState(false);
 
   // Get messages for current channel or private chat - memoized
   const channelKey = useMemo(
@@ -950,6 +948,53 @@ export const ChatArea: React.FC<{
     setCursorPosition(newCursorPos);
   };
 
+  const handleInputPaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const clipboardData = e.clipboardData;
+      if (!clipboardData) return;
+
+      // Try the files property first (works in Chromium/WebView)
+      const files = clipboardData.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith("image/")) {
+          e.preventDefault();
+          const previewUrl = URL.createObjectURL(file);
+          setImagePreview({
+            isOpen: true,
+            file,
+            previewUrl,
+          });
+          return;
+        }
+      }
+
+      // Try items property for browsers that support it
+      const items = clipboardData.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          
+          // Handle standard image types
+          if (item.kind === "file" && item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) {
+              e.preventDefault();
+              const previewUrl = URL.createObjectURL(file);
+              setImagePreview({
+                isOpen: true,
+                file,
+                previewUrl,
+              });
+              return;
+            }
+          }
+        }
+      }
+    },
+    [],
+  );
+
   const handleUsernameSelect = (username: string) => {
     if (tabCompletion.isActive) {
       // Use tab completion state for accurate replacement
@@ -1451,26 +1496,8 @@ export const ChatArea: React.FC<{
     isChannelRenameModalOpen,
   ]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setIsFileUploaderOpen(true);
-    }
-  }, []);
-
   return (
-    <div
-      className="flex flex-col h-full"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
+    <div className="flex flex-col h-full">
       {/* Channel header */}
       <ChatHeader
         selectedChannel={selectedChannel ?? null}
@@ -1671,6 +1698,7 @@ export const ChatArea: React.FC<{
               onClick={handleInputClick}
               onKeyUp={handleInputKeyUp}
               onKeyDown={handleKeyDown}
+              onPaste={handleInputPaste}
               placeholder={
                 selectedChannel
                   ? `Message #${selectedChannel.name.replace(/^#/, "")}${
@@ -1730,12 +1758,28 @@ export const ChatArea: React.FC<{
                 <button
                   className="w-full text-left px-4 py-2 text-discord-text-normal hover:bg-discord-dark-300 rounded-lg flex items-center"
                   onClick={() => {
-                    setIsFileUploaderOpen(true);
+                    // Handle image selection for preview
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = "image/*";
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        // Create preview URL
+                        const previewUrl = URL.createObjectURL(file);
+                        setImagePreview({
+                          isOpen: true,
+                          file,
+                          previewUrl,
+                        });
+                      }
+                    };
+                    input.click();
                     setShowPlusMenu(false);
                   }}
                 >
-                  <FaUpload className="mr-2" />
-                  Upload File
+                  <FaPlus className="mr-2" />
+                  Upload Image
                 </button>
               )}
               <button
@@ -1770,15 +1814,6 @@ export const ChatArea: React.FC<{
             }}
           />
 
-          <FileUploader
-            isOpen={isFileUploaderOpen}
-            onClose={() => setIsFileUploaderOpen(false)}
-            serverId={selectedServerId || ""}
-            channelId={selectedChannel?.id || selectedPrivateChat?.id || ""}
-            channelName={
-              selectedChannel?.name || selectedPrivateChat?.username || ""
-            }
-          />
 
           {isColorPickerOpen && (
             <ColorPicker
