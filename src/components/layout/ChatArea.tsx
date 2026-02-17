@@ -946,6 +946,53 @@ export const ChatArea: React.FC<{
     setCursorPosition(newCursorPos);
   };
 
+  const handleInputPaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const clipboardData = e.clipboardData;
+      if (!clipboardData) return;
+
+      // Try the files property first (works in Chromium/WebView)
+      const files = clipboardData.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith("image/")) {
+          e.preventDefault();
+          const previewUrl = URL.createObjectURL(file);
+          setImagePreview({
+            isOpen: true,
+            file,
+            previewUrl,
+          });
+          return;
+        }
+      }
+
+      // Try items property for browsers that support it
+      const items = clipboardData.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          
+          // Handle standard image types
+          if (item.kind === "file" && item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) {
+              e.preventDefault();
+              const previewUrl = URL.createObjectURL(file);
+              setImagePreview({
+                isOpen: true,
+                file,
+                previewUrl,
+              });
+              return;
+            }
+          }
+        }
+      }
+    },
+    [],
+  );
+
   const handleUsernameSelect = (username: string) => {
     if (tabCompletion.isActive) {
       // Use tab completion state for accurate replacement
@@ -1625,6 +1672,7 @@ export const ChatArea: React.FC<{
               onClick={handleInputClick}
               onKeyUp={handleInputKeyUp}
               onKeyDown={handleKeyDown}
+              onPaste={handleInputPaste}
               placeholder={
                 selectedChannel
                   ? `Message #${selectedChannel.name.replace(/^#/, "")}${
