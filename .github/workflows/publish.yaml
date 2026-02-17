@@ -15,6 +15,7 @@ jobs:
     outputs:
       current_version: ${{ steps.package-version.outputs.version }}
       tag_name: ${{ steps.package-version.outputs.tag_name }}
+      artifact_version: ${{ steps.package-version.outputs.artifact_version }}
       draft: "false"
       prerelease: ${{ github.ref_type != 'tag' && 'true' || 'false' }}
       body: |
@@ -28,12 +29,16 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             TAG_NAME="v${VERSION}"
+            ARTIFACT_VERSION="${VERSION}"
           else
             # Use unique tag for prereleases to avoid conflicts
             TAG_NAME="v${VERSION}-build${{ github.run_number }}"
+            # Artifacts use build number suffix to avoid overwriting
+            ARTIFACT_VERSION="${VERSION}-build${{ github.run_number }}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "artifact_version=$ARTIFACT_VERSION" >> "$GITHUB_OUTPUT"
 
   publish-linux-appimage:
     runs-on: ubuntu-22.04
@@ -76,9 +81,7 @@ jobs:
 
       - name: Rename AppImage
         run: |
-          if [ -f ./src-tauri/target/release/bundle/appimage/ObsidianIRC_*.AppImage ]; then
-            mv ./src-tauri/target/release/bundle/appimage/ObsidianIRC_*.AppImage ./src-tauri/target/release/bundle/appimage/ObsidianIRC_${{ needs.collect-version.outputs.current_version }}_amd64.AppImage
-          fi
+          mv ./src-tauri/target/release/bundle/appimage/ObsidianIRC_*.AppImage ./src-tauri/target/release/bundle/appimage/ObsidianIRC_${{ needs.collect-version.outputs.artifact_version }}_amd64.AppImage
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -91,7 +94,7 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            ./src-tauri/target/release/bundle/appimage/ObsidianIRC_${{ needs.collect-version.outputs.current_version }}_amd64.AppImage
+            ./src-tauri/target/release/bundle/appimage/ObsidianIRC_${{ needs.collect-version.outputs.artifact_version }}_amd64.AppImage
 
   publish-windows:
     runs-on: windows-latest
@@ -127,6 +130,10 @@ jobs:
           VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
 
+      - name: Rename Windows installer
+        run: |
+          mv ./src-tauri/target/release/bundle/nsis/ObsidianIRC_*_x64-setup.exe ./src-tauri/target/release/bundle/nsis/ObsidianIRC_${{ needs.collect-version.outputs.artifact_version }}_x64-setup.exe
+
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
@@ -138,7 +145,7 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            ./src-tauri/target/release/bundle/nsis/ObsidianIRC_${{ needs.collect-version.outputs.current_version }}_x64-setup.exe
+            ./src-tauri/target/release/bundle/nsis/ObsidianIRC_${{ needs.collect-version.outputs.artifact_version }}_x64-setup.exe
 
   publish-android:
     runs-on: ubuntu-latest
@@ -195,13 +202,8 @@ jobs:
 
       - name: Rename APK file
         run: |
-          if [ -f src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk ]; then
-            mv src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk \
-               src-tauri/gen/android/app/build/outputs/apk/debug/ObsidianIRC-${{ needs.collect-version.outputs.version }}-debug.apk
-          elif [ -f src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk ]; then
-            mv src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk \
-               src-tauri/gen/android/app/build/outputs/apk/debug/ObsidianIRC-${{ needs.collect-version.outputs.version }}-debug.apk
-          fi
+          mv src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk \
+             src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.artifact_version }}-debug.apk
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -214,4 +216,4 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            src-tauri/gen/android/app/build/outputs/apk/debug/ObsidianIRC-${{ needs.collect-version.outputs.version }}-debug.apk
+            src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.artifact_version }}-debug.apk
