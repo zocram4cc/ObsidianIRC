@@ -54,6 +54,23 @@ export interface GlobalSettings {
   customCSS: string;
   awayMessage: string;
   quitMessage: string;
+  autoCheckUpdates: boolean;
+}
+
+export interface UpdateInfo {
+  version: string;
+  releaseUrl: string;
+  downloadUrl: string | null;
+  releaseNotes: string;
+  publishedAt: string;
+}
+
+export interface UpdateState {
+  isChecking: boolean;
+  updateAvailable: boolean;
+  updateInfo: UpdateInfo | null;
+  lastChecked: string | null;
+  error: string | null;
 }
 
 export interface UISelections {
