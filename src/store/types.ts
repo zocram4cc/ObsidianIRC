@@ -51,6 +51,7 @@ export interface GlobalSettings {
   enableMarkdownRendering: boolean;
   chatFontScaling: number;
   uiScaling: number;
+  customCSS: string;
   awayMessage: string;
   quitMessage: string;
 }

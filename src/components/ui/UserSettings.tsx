@@ -104,7 +104,7 @@ const categories: CategoryInfo[] = [
     id: "appearance",
     title: "Appearance",
     icon: <FaPalette className="w-5 h-5" />,
-    description: "Customize the look and feel",
+    description: "Customize the look and feel of the application",
   },
   {
     id: "notifications",
