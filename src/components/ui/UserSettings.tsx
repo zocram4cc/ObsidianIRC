@@ -9,6 +9,7 @@ import {
   FaBell,
   FaCog,
   FaImage,
+  FaPalette,
   FaServer,
   FaShieldAlt,
   FaTimes,
@@ -78,6 +79,7 @@ const deepEqual = (a: unknown, b: unknown): boolean => {
 
 type SettingsCategory =
   | "profile"
+  | "appearance"
   | "notifications"
   | "preferences"
   | "media"
@@ -97,6 +99,12 @@ const categories: CategoryInfo[] = [
     title: "Profile",
     icon: <FaUser className="w-5 h-5" />,
     description: "Manage your profile information and metadata",
+  },
+  {
+    id: "appearance",
+    title: "Appearance",
+    icon: <FaPalette className="w-5 h-5" />,
+    description: "Customize the look and feel of the application",
   },
   {
     id: "notifications",

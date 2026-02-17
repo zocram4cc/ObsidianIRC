@@ -97,6 +97,7 @@ const App: React.FC = () => {
     clearProfileViewRequest,
     messages,
     isConnecting,
+    globalSettings,
   } = useStore();
 
   // Local state for User Profile modal
@@ -212,6 +213,30 @@ const App: React.FC = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [toggleQuickActions]);
+
+  // Apply custom CSS
+  useEffect(() => {
+    const customCSS = globalSettings?.customCSS;
+    if (!customCSS) {
+      return;
+    }
+
+    // Create or update the custom CSS style element
+    let styleElement = document.getElementById("custom-css-styles");
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.id = "custom-css-styles";
+      document.head.appendChild(styleElement);
+    }
+    styleElement.textContent = customCSS;
+
+    return () => {
+      // Clean up on unmount
+      if (styleElement) {
+        styleElement.textContent = "";
+      }
+    };
+  }, [globalSettings?.customCSS]);
 
   return (
     <div className="h-screen overflow-hidden">

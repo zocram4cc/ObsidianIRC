@@ -1,4 +1,5 @@
 import { CustomMentionsField } from "../../../components/ui/settings/CustomMentionsField";
+import { CustomCSSField } from "../../../components/ui/settings/CustomCSSField";
 import { IgnoreListField } from "../../../components/ui/settings/IgnoreListField";
 import settingsRegistry from "../registry";
 import type { SettingDefinition } from "../types";
@@ -384,6 +385,25 @@ const preferenceSettings: SettingDefinition[] = [
 ];
 
 /**
+ * Appearance Settings
+ */
+const appearanceSettings: SettingDefinition[] = [
+  {
+    id: "appearance.customCSS",
+    key: "customCSS",
+    category: "appearance",
+    subcategory: "Customization",
+    title: "Custom CSS",
+    description: "Add custom CSS to style the application",
+    type: "custom",
+    defaultValue: "",
+    searchKeywords: ["css", "custom", "style", "appearance", "theme"],
+    priority: 1,
+    customComponent: CustomCSSField,
+  },
+];
+
+/**
  * Media Settings
  */
 const mediaSettings: SettingDefinition[] = [
@@ -513,6 +533,7 @@ export const registerAllSettings = () => {
   // Register all settings with the registry
   settingsRegistry.registerMany([
     ...profileSettings,
+    ...appearanceSettings,
     ...notificationSettings,
     ...preferenceSettings,
     ...mediaSettings,
@@ -523,6 +544,7 @@ export const registerAllSettings = () => {
 // Export individual categories for use in components
 export {
   profileSettings,
+  appearanceSettings,
   notificationSettings,
   preferenceSettings,
   mediaSettings,
