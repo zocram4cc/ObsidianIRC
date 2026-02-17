@@ -68,6 +68,10 @@ jobs:
       - name: Build AppImage
         run: npm run tauri build
         env:
+          VITE_DEFAULT_IRC_SERVER: "wss://www.ilex-forest.com/webirc"
+          VITE_DEFAULT_IRC_SERVER_NAME: "Ilex Forest"
+          VITE_DEFAULT_IRC_CHANNELS: "#ilex-forest"
+          VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
 
       - name: Rename AppImage
@@ -115,6 +119,10 @@ jobs:
       - name: Build Windows
         run: npm run tauri build
         env:
+          VITE_DEFAULT_IRC_SERVER: "wss://www.ilex-forest.com/webirc"
+          VITE_DEFAULT_IRC_SERVER_NAME: "Ilex Forest"
+          VITE_DEFAULT_IRC_CHANNELS: "#ilex-forest"
+          VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
 
       - name: Publish
@@ -177,6 +185,10 @@ jobs:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
           ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
           ANDROID_NDK: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
+          VITE_DEFAULT_IRC_SERVER: "wss://www.ilex-forest.com/webirc"
+          VITE_DEFAULT_IRC_SERVER_NAME: "Ilex Forest"
+          VITE_DEFAULT_IRC_CHANNELS: "#ilex-forest"
+          VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
 
       - name: Rename APK file
