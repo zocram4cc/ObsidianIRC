@@ -195,6 +195,7 @@ describe("Metadata Display Features", () => {
         customCSS: "",
         awayMessage: "",
         quitMessage: "ObsidianIRC - Bringing IRC to the future",
+        autoCheckUpdates: true,
       },
     });
 

@@ -31,6 +31,7 @@ import type {
   ConnectionDetails,
   GlobalSettings,
   layoutColumn,
+  UpdateState,
 } from "./types";
 
 const NARROW_VIEW_QUERY = "(max-width: 768px)";
@@ -509,6 +510,8 @@ export interface AppState {
   // UI state
   ui: UIState;
   globalSettings: GlobalSettings;
+  // Update state
+  updateState: UpdateState;
   // Actions
   connect: (
     name: string,
@@ -872,7 +875,16 @@ const useStore = create<AppState>((set, get) => ({
     // Status messages
     awayMessage: "",
     quitMessage: "ObsidianIRC - Bringing IRC to the future",
+    // Update settings
+    autoCheckUpdates: true,
     ...loadSavedGlobalSettings(), // Load saved settings from localStorage
+  },
+  updateState: {
+    isChecking: false,
+    updateAvailable: false,
+    updateInfo: null,
+    lastChecked: null,
+    error: null,
   },
 
   // IRC client actions
