@@ -174,7 +174,7 @@ jobs:
         run: npm install
 
       - name: Build Android APK (debug)
-        run: npm run tauri android build -- --apk
+        run: npm run tauri android build -- --apk true --debug
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
           ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
@@ -182,11 +182,11 @@ jobs:
 
       - name: Rename APK file
         run: |
-          mv ./src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk ./src-tauri/gen/android/app/build/outputs/apk/universal/release/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
+          mv ./src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk ./src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.collect-version.outputs.tag_name }}
           files: |
-            ./src-tauri/gen/android/app/build/outputs/apk/universal/release/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
+            ./src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
