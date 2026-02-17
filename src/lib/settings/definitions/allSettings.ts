@@ -1,5 +1,5 @@
-import { CustomMentionsField } from "../../../components/ui/settings/CustomMentionsField";
 import { CustomCSSField } from "../../../components/ui/settings/CustomCSSField";
+import { CustomMentionsField } from "../../../components/ui/settings/CustomMentionsField";
 import { IgnoreListField } from "../../../components/ui/settings/IgnoreListField";
 import settingsRegistry from "../registry";
 import type { SettingDefinition } from "../types";

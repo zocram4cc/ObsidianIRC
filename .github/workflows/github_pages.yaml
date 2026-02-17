@@ -1,4 +1,4 @@
-# https://obsidianirc.github.io
+# https://zocram4cc.github.io
 
 name: Deploy to GitHub Pages
 
@@ -23,5 +23,5 @@ jobs:
         with:
           personal_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: ./dist
-          external_repository: obsidianirc/obsidianirc.github.io
+          external_repository: zocram4cc/zocram4cc.github.io
           publish_branch: main
