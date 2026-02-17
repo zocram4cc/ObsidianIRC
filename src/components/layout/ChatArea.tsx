@@ -428,7 +428,6 @@ export const ChatArea: React.FC<{
     currentUser,
   });
 
-
   // Get messages for current channel or private chat - memoized
   const channelKey = useMemo(
     () =>
@@ -974,7 +973,7 @@ export const ChatArea: React.FC<{
       if (items) {
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
-          
+
           // Handle standard image types
           if (item.kind === "file" && item.type.startsWith("image/")) {
             const file = item.getAsFile();
@@ -1813,7 +1812,6 @@ export const ChatArea: React.FC<{
               setIsGifSelectorOpen(false);
             }}
           />
-
 
           {isColorPickerOpen && (
             <ColorPicker
