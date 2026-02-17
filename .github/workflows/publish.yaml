@@ -28,9 +28,28 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+  # Create release first to avoid race conditions
+  create-release:
+    needs: collect-version
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: ${{ needs.collect-version.outputs.draft == 'true' }}
+          prerelease: ${{ needs.collect-version.outputs.prerelease == 'true' }}
+          body: ${{ needs.collect-version.outputs.body }}
+          name: ${{ needs.collect-version.outputs.name }}
+          tag_name: ${{ needs.collect-version.outputs.tag_name }}
+          generate_release_notes: true
+          make_latest: true
+
   # Linux AppImage build (x64)
   publish-linux-appimage:
-    needs: collect-version
+    needs: [collect-version, create-release]
     permissions:
       contents: write
     runs-on: ubuntu-22.04
@@ -62,22 +81,16 @@ jobs:
       - name: Build AppImage
         run: npm run tauri build -- --bundles appimage
 
-      - name: Publish
+      - name: Upload AppImage to Release
         uses: softprops/action-gh-release@v2
         with:
-          draft: ${{ needs.collect-version.outputs.draft == 'true' }}
-          prerelease: ${{ needs.collect-version.outputs.prerelease == 'true' }}
-          body: ${{ needs.collect-version.outputs.body }}
-          name: ${{ needs.collect-version.outputs.name }}
           tag_name: ${{ needs.collect-version.outputs.tag_name }}
-          generate_release_notes: true
-          make_latest: true
           files: |
             ./src-tauri/target/release/bundle/appimage/ObsidianIRC_${{ needs.collect-version.outputs.current_version}}_amd64.AppImage
 
   # Windows x64 build
   publish-windows:
-    needs: collect-version
+    needs: [collect-version, create-release]
     permissions:
       contents: write
     runs-on: windows-latest
@@ -101,23 +114,22 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Windows
+        run: npm run tauri build
+
+      - name: Upload Windows Installer to Release
+        uses: softprops/action-gh-release@v2
         with:
-          tagName: ${{ needs.collect-version.outputs.tag_name }}
-          releaseName: ${{ needs.collect-version.outputs.name }}
-          releaseBody: ${{ needs.collect-version.outputs.body }}
-          releaseDraft: ${{ needs.collect-version.outputs.draft == 'true' }}
-          prerelease: ${{ needs.collect-version.outputs.prerelease == 'true' }}
-          args: ""
+          tag_name: ${{ needs.collect-version.outputs.tag_name }}
+          files: |
+            ./src-tauri/target/release/bundle/nsis/ObsidianIRC_${{ needs.collect-version.outputs.current_version}}_x64-setup.exe
 
   # Android APK build (debug, no signing required)
   publish-android:
-    runs-on: ubuntu-latest
-    needs: collect-version
+    needs: [collect-version, create-release]
     permissions:
       contents: write
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -155,7 +167,7 @@ jobs:
         run: npm install
 
       - name: Build Android APK (debug)
-        run: npm run tauri android build -- --apk --debug
+        run: npm run tauri android build -- --apk
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
           ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
@@ -163,17 +175,11 @@ jobs:
 
       - name: Rename APK file
         run: |
-          mv ./src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk ./src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
+          mv ./src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk ./src-tauri/gen/android/app/build/outputs/apk/universal/release/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
 
-      - name: Publish
+      - name: Upload APK to Release
         uses: softprops/action-gh-release@v2
         with:
-          draft: ${{ needs.collect-version.outputs.draft == 'true' }}
-          prerelease: ${{ needs.collect-version.outputs.prerelease == 'true' }}
-          body: ${{ needs.collect-version.outputs.body }}
-          name: ${{ needs.collect-version.outputs.name }}
           tag_name: ${{ needs.collect-version.outputs.tag_name }}
-          generate_release_notes: true
-          make_latest: true
           files: |
-            ./src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
+            ./src-tauri/gen/android/app/build/outputs/apk/universal/release/ObsidianIRC-${{ needs.collect-version.outputs.current_version}}-debug.apk
