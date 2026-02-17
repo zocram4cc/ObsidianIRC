@@ -14,19 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       current_version: ${{ steps.package-version.outputs.version }}
-      tag_name: v${{ steps.package-version.outputs.version }}
+      tag_name: ${{ steps.package-version.outputs.tag_name }}
       draft: "false"
       prerelease: ${{ github.ref_type != 'tag' && 'true' || 'false' }}
       body: |
         See the assets to download this version and install.
-      name: ObsidianIRC v${{ steps.package-version.outputs.version }}
+      name: ObsidianIRC ${{ steps.package-version.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v4
       - name: Get Node project version
         id: package-version
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG_NAME="v${VERSION}"
+          else
+            # Use unique tag for prereleases to avoid conflicts
+            TAG_NAME="v${VERSION}-build${{ github.run_number }}"
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
 
   # Create release first to avoid race conditions
   create-release:
