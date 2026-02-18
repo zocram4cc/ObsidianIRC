@@ -47,10 +47,11 @@ android {
             
             if (signingKeyStore != null && signingKeyAlias != null && signingStorePassword != null && signingKeyPassword != null) {
                 // Keystore is in src-tauri/gen/android/, build.gradle.kts is in src-tauri/gen/android/app/
-                val keystorePath = "../$signingKeyStore"
+                // Use project.file() to get absolute path
+                val keystoreFile = project.file("../$signingKeyStore")
                 signingConfigs {
                     create("release") {
-                        storeFile(file(keystorePath))
+                        storeFile(keystoreFile)
                         storePassword = signingStorePassword
                         keyAlias = signingKeyAlias
                         keyPassword = signingKeyPassword
