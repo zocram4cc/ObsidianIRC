@@ -195,10 +195,11 @@ jobs:
       - name: Build Android APK (release)
         run: |
           # Configure signing via gradle.properties (in android directory)
-          echo "android.signing.key.store=obsidianirc.keystore" >> src-tauri/gen/android/gradle.properties
-          echo "android.signing.key.alias=obsidianirc" >> src-tauri/gen/android/gradle.properties
-          echo "android.signing.key.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> src-tauri/gen/android/gradle.properties
-          echo "android.signing.key.aliasPassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> src-tauri/gen/android/gradle.properties
+          # Use printf to ensure each property is on a new line
+          printf '\nandroid.signing.key.store=obsidianirc.keystore' >> src-tauri/gen/android/gradle.properties
+          printf '\nandroid.signing.key.alias=obsidianirc' >> src-tauri/gen/android/gradle.properties
+          printf '\nandroid.signing.key.storePassword=%s' "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> src-tauri/gen/android/gradle.properties
+          printf '\nandroid.signing.key.aliasPassword=%s' "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> src-tauri/gen/android/gradle.properties
           npm run tauri android build -- --apk true
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
