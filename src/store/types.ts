@@ -55,6 +55,7 @@ export interface GlobalSettings {
   awayMessage: string;
   quitMessage: string;
   autoCheckUpdates: boolean;
+  showMemberListByDefault: boolean;
 }
 
 export interface UpdateInfo {

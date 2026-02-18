@@ -2,6 +2,8 @@
  * Modal for previewing and uploading images
  */
 
+import { useEffect } from "react";
+
 interface ImagePreviewModalProps {
   isOpen: boolean;
   file: File | null;
@@ -20,6 +22,21 @@ export function ImagePreviewModal({
   onCancel,
   onUpload,
 }: ImagePreviewModalProps) {
+  // Handle Enter key to confirm upload
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onUpload();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onUpload]);
+
   if (!isOpen || !previewUrl) return null;
 
   return (

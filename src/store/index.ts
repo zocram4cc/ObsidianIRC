@@ -877,6 +877,8 @@ const useStore = create<AppState>((set, get) => ({
     quitMessage: "ObsidianIRC - Bringing IRC to the future",
     // Update settings
     autoCheckUpdates: true,
+    // Member list settings
+    showMemberListByDefault: true,
     ...loadSavedGlobalSettings(), // Load saved settings from localStorage
   },
   updateState: (() => {
@@ -1535,6 +1537,15 @@ const useStore = create<AppState>((set, get) => ({
         }
       }
 
+      // Get the showMemberListByDefault setting
+      const showMemberListByDefault =
+        state.globalSettings?.showMemberListByDefault ?? true;
+      // Determine if we should show member list based on setting and whether a channel is selected
+      const shouldShowMemberList =
+        showMemberListByDefault &&
+        !!selectedChannelId &&
+        !state.ui.isNarrowView;
+
       return {
         ui: {
           ...state.ui,
@@ -1547,6 +1558,7 @@ const useStore = create<AppState>((set, get) => ({
             },
           },
           isMobileMenuOpen: false,
+          isMemberListVisible: shouldShowMemberList,
           // Don't auto-navigate when selecting a server - let user stay on channel list
         },
       };

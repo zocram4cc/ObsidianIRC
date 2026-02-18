@@ -190,6 +190,37 @@ const App: React.FC = () => {
   // Initialize update check hook (auto-checks when server connects)
   useUpdateCheck();
 
+  // Restore last selected server on startup
+  const ui = useStore((state) => state.ui);
+  const selectServer = useStore((state) => state.selectServer);
+  const servers = useStore((state) => state.servers);
+  const hasConnectedToSavedServers = useStore(
+    (state) => state.hasConnectedToSavedServers,
+  );
+
+  // Restore server selection after servers are loaded
+  useEffect(() => {
+    if (
+      hasConnectedToSavedServers &&
+      servers.length > 0 &&
+      ui.selectedServerId
+    ) {
+      // Check if the saved server still exists
+      const serverExists = servers.some((s) => s.id === ui.selectedServerId);
+      if (serverExists) {
+        // Only restore if not already selected to avoid unnecessary re-renders
+        const currentSelectedId = useStore.getState().ui.selectedServerId;
+        if (currentSelectedId !== ui.selectedServerId) {
+          console.log(
+            "[App] Restoring last selected server:",
+            ui.selectedServerId,
+          );
+          selectServer(ui.selectedServerId);
+        }
+      }
+    }
+  }, [hasConnectedToSavedServers, servers, ui.selectedServerId, selectServer]);
+
   // askPermissions();
   useEffect(() => {
     initializeEnvSettings(toggleAddServerModal, joinChannel);
@@ -265,14 +296,29 @@ const App: React.FC = () => {
     if (typeof document !== "undefined") {
       const html = document.documentElement;
       const body = document.body;
-      html.style.height = "100%";
+      // Use dvh (dynamic viewport height) for mobile browsers to properly handle keyboard
+      // Fall back to 100% for desktop browsers that don't support dvh
+      // Using @supports in style tag would be ideal, but inline styles prioritize dvh
+      html.style.minHeight = "100dvh";
+      html.style.height = "100dvh";
       html.style.width = "100%";
       html.style.overflow = "hidden";
-      body.style.height = "100%";
+      body.style.minHeight = "100dvh";
+      body.style.height = "100dvh";
       body.style.width = "100%";
       body.style.margin = "0";
       body.style.overflow = "hidden";
       body.style.backgroundColor = "#313338"; // discord-dark-300
+
+      // Add fallback using CSS custom property for browsers without dvh support
+      const style = document.createElement("style");
+      style.textContent =
+        "@supports (height: 100dvh) { :root { --viewport-height: 100dvh; } } @supports not (height: 100dvh) { :root { --viewport-height: 100vh; } }";
+      document.head.appendChild(style);
+
+      return () => {
+        document.head.removeChild(style);
+      };
     }
   }, []);
 

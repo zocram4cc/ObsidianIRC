@@ -62,6 +62,7 @@ const mockStoreState = {
     showJoinsParts: true,
     showQuits: true,
     autoCheckUpdates: true,
+    showMemberListByDefault: true,
   },
   updateState: {
     isChecking: false,

@@ -401,6 +401,19 @@ const preferenceSettings: SettingDefinition[] = [
  */
 const appearanceSettings: SettingDefinition[] = [
   {
+    id: "appearance.showMemberListByDefault",
+    key: "showMemberListByDefault",
+    category: "appearance",
+    subcategory: "Layout",
+    title: "Show Member List by Default",
+    description:
+      "Show the member list (user list) when opening a channel on desktop",
+    type: "toggle",
+    defaultValue: true,
+    searchKeywords: ["member", "list", "user", "layout", "sidebar"],
+    priority: 0,
+  },
+  {
     id: "appearance.customCSS",
     key: "customCSS",
     category: "appearance",

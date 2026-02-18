@@ -86,6 +86,7 @@ describe("ChannelSettingsModal", () => {
       enableNotifications: true,
       notificationSound: "default",
       notificationVolume: 0.8,
+      showMemberListByDefault: true,
     },
     ui: {
       selectedServerId: null,

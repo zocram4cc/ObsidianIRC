@@ -242,7 +242,8 @@ export const AppLayout: React.FC = () => {
       style={{
         paddingTop: "var(--safe-area-inset-top)",
         paddingRight: "var(--safe-area-inset-right)",
-        paddingBottom: "var(--safe-area-inset-bottom)",
+        paddingBottom:
+          "calc(var(--safe-area-inset-bottom) + var(--keyboard-height, 0px))",
         paddingLeft: "var(--safe-area-inset-left)",
       }}
     >

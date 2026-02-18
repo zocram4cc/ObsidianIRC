@@ -131,6 +131,7 @@ describe("LinkSecurityWarningModal", () => {
         notificationVolume: 0.8,
         skipLinkSecurityWarnings: false,
         skipLocalhostWarnings: false,
+        showMemberListByDefault: true,
       },
     };
 
