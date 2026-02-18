@@ -72,10 +72,7 @@ describe("UpdateNotification", () => {
       name: /View/i,
     });
     expect(viewLink).toBeInTheDocument();
-    expect(viewLink).toHaveAttribute(
-      "href",
-      "https://github.com/test/release",
-    );
+    expect(viewLink).toHaveAttribute("href", "https://github.com/test/release");
   });
 
   it("should call dismissUpdate when dismiss button is clicked", async () => {
