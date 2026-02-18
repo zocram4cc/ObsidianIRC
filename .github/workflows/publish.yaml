@@ -188,8 +188,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Android APK (debug)
-        run: npm run tauri android build -- --apk true --debug
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > obsidianirc.keystore
+
+      - name: Build Android APK (release)
+        run: |
+          # Configure signing via gradle.properties
+          echo "android.signing.key.store=obsidianirc.keystore" >> gradle.properties
+          echo "android.signing.key.alias=obsidianirc" >> gradle.properties
+          echo "android.signing.key.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> gradle.properties
+          echo "android.signing.key.aliasPassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> gradle.properties
+          npm run tauri android build -- --apk true
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
           ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/27.0.11902837
@@ -202,8 +212,8 @@ jobs:
 
       - name: Rename APK file
         run: |
-          mv src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk \
-             src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.artifact_version }}-debug.apk
+          mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk \
+             src-tauri/gen/android/app/build/outputs/apk/universal/release/ObsidianIRC-${{ needs.collect-version.outputs.artifact_version }}-release.apk
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -216,4 +226,4 @@ jobs:
           generate_release_notes: true
           make_latest: true
           files: |
-            src-tauri/gen/android/app/build/outputs/apk/universal/debug/ObsidianIRC-${{ needs.collect-version.outputs.artifact_version }}-debug.apk
+            src-tauri/gen/android/app/build/outputs/apk/universal/release/ObsidianIRC-${{ needs.collect-version.outputs.artifact_version }}-release.apk

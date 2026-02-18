@@ -38,6 +38,25 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = true
+            
+            // Read signing config from gradle.properties
+            val signingKeyStore = project.property("android.signing.key.store") as? String
+            val signingKeyAlias = project.property("android.signing.key.alias") as? String
+            val signingStorePassword = project.property("android.signing.key.storePassword") as? String
+            val signingKeyPassword = project.property("android.signing.key.aliasPassword") as? String
+            
+            if (signingKeyStore != null && signingKeyAlias != null && signingStorePassword != null && signingKeyPassword != null) {
+                signingConfigs {
+                    create("release") {
+                        storeFile(file(signingKeyStore))
+                        storePassword = signingStorePassword
+                        keyAlias = signingKeyAlias
+                        keyPassword = signingKeyPassword
+                    }
+                }
+                signingConfig = signingConfigs.getByName("release")
+            }
+            
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
