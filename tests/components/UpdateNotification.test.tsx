@@ -43,6 +43,8 @@ describe("UpdateNotification", () => {
     mockUpdateCheck.updateAvailable = true;
     mockUpdateCheck.updateInfo = {
       version: "0.2.5",
+      tag: "v0.2.5",
+      name: "Version 0.2.5",
       releaseUrl: "https://github.com/test/release",
       downloadUrl: "https://github.com/test/download",
       releaseNotes: "New features",
@@ -50,13 +52,15 @@ describe("UpdateNotification", () => {
     };
 
     render(<UpdateNotification />);
-    expect(screen.getByText(/Update Available: 0.2.5/i)).toBeInTheDocument();
+    expect(screen.getByText(/v0.2.5 available/i)).toBeInTheDocument();
   });
 
-  it("should show download button when update is available", () => {
+  it("should show view link when update is available", () => {
     mockUpdateCheck.updateAvailable = true;
     mockUpdateCheck.updateInfo = {
       version: "0.2.5",
+      tag: "v0.2.5",
+      name: "Version 0.2.5",
       releaseUrl: "https://github.com/test/release",
       downloadUrl: "https://github.com/test/download",
       releaseNotes: "New features",
@@ -64,27 +68,11 @@ describe("UpdateNotification", () => {
     };
 
     render(<UpdateNotification />);
-    expect(
-      screen.getByRole("button", { name: /Download/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("should show release notes link when update is available", () => {
-    mockUpdateCheck.updateAvailable = true;
-    mockUpdateCheck.updateInfo = {
-      version: "0.2.5",
-      releaseUrl: "https://github.com/test/release",
-      downloadUrl: "https://github.com/test/download",
-      releaseNotes: "New features",
-      publishedAt: "2026-02-17T00:00:00Z",
-    };
-
-    render(<UpdateNotification />);
-    const releaseNotesLink = screen.getByRole("link", {
-      name: /Release Notes/i,
+    const viewLink = screen.getByRole("link", {
+      name: /View/i,
     });
-    expect(releaseNotesLink).toBeInTheDocument();
-    expect(releaseNotesLink).toHaveAttribute(
+    expect(viewLink).toBeInTheDocument();
+    expect(viewLink).toHaveAttribute(
       "href",
       "https://github.com/test/release",
     );
@@ -95,6 +83,8 @@ describe("UpdateNotification", () => {
     mockUpdateCheck.updateAvailable = true;
     mockUpdateCheck.updateInfo = {
       version: "0.2.5",
+      tag: "v0.2.5",
+      name: "Version 0.2.5",
       releaseUrl: "https://github.com/test/release",
       downloadUrl: "https://github.com/test/download",
       releaseNotes: "New features",
