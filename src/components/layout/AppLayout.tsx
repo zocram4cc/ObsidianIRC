@@ -6,6 +6,7 @@ import { useSwipeNavigation } from "../../hooks/useSwipeNavigation";
 import useStore from "../../store";
 import type { layoutColumn } from "../../store/types";
 import { GlobalNotifications } from "../ui/GlobalNotifications";
+import { UpdateNotification } from "../ui/UpdateNotification";
 import { ChannelList } from "./ChannelList";
 import { ChatArea } from "./ChatArea";
 import { MemberList } from "./MemberList";
@@ -245,6 +246,7 @@ export const AppLayout: React.FC = () => {
         paddingLeft: "var(--safe-area-inset-left)",
       }}
     >
+      <UpdateNotification />
       {isNarrowView ? (
         <div
           ref={containerRef}

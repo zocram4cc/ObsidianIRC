@@ -59,8 +59,10 @@ export interface GlobalSettings {
 
 export interface UpdateInfo {
   version: string;
+  tag: string;
+  name: string;
   releaseUrl: string;
-  downloadUrl: string | null;
+  downloadUrl: string;
   releaseNotes: string;
   publishedAt: string;
 }

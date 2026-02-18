@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Fully fledged IRCv3 client and more"
 authors = ["Matheus Fillipe", "Valerie Liu"]
 license = "GPL3"
-repository = "https://github.com/ObsidianIRC/ObsidianIRC"
+repository = "https://github.com/zocram4cc/ObsidianIRC"
 edition = "2021"
 rust-version = "1.77.2"
 
@@ -29,6 +29,8 @@ tauri-plugin-deep-link = "2.4"
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
 base64 = "0.22"
 tauri-plugin-opener = "2.0.0"
+reqwest = { version = "0.12", features = ["json"] }
+semver = "1.0"
 
 # Use rustls for Android, native-tls for other platforms
 [target.'cfg(not(target_os = "android"))'.dependencies]

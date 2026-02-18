@@ -879,13 +879,49 @@ const useStore = create<AppState>((set, get) => ({
     autoCheckUpdates: true,
     ...loadSavedGlobalSettings(), // Load saved settings from localStorage
   },
-  updateState: {
-    isChecking: false,
-    updateAvailable: false,
-    updateInfo: null,
-    lastChecked: null,
-    error: null,
-  },
+  updateState: (() => {
+    // Load persisted update info from localStorage
+    try {
+      const stored = localStorage.getItem("obsidianirc-update-info");
+      console.log(
+        "[Store] Loading update info from localStorage:",
+        stored ? "found" : "not found",
+      );
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Only use if checked within the last 24 hours
+        const checkedAt = new Date(parsed.checkedAt).getTime();
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        console.log(
+          "[Store] Update info age (hours):",
+          (Date.now() - checkedAt) / (60 * 60 * 1000),
+        );
+        if (checkedAt > oneDayAgo && parsed.updateInfo) {
+          console.log(
+            "[Store] Restoring update available state:",
+            parsed.updateInfo.version,
+          );
+          return {
+            isChecking: false,
+            updateAvailable: true,
+            updateInfo: parsed.updateInfo,
+            lastChecked: parsed.checkedAt,
+            error: null,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[Store] Failed to load persisted update info:", e);
+    }
+    console.log("[Store] No valid persisted update info, using default state");
+    return {
+      isChecking: false,
+      updateAvailable: false,
+      updateInfo: null,
+      lastChecked: null,
+      error: null,
+    };
+  })(),
 
   // IRC client actions
   connect: async (

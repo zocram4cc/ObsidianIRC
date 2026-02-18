@@ -20,6 +20,7 @@ import QuickActions from "./components/ui/QuickActions";
 import UserProfileModal from "./components/ui/UserProfileModal";
 import UserSettings from "./components/ui/UserSettings";
 import { useKeyboardResize } from "./hooks/useKeyboardResize";
+import { useUpdateCheck } from "./hooks/useUpdateCheck";
 import ircClient from "./lib/ircClient";
 import { parseIrcUrl } from "./lib/ircUrlParser";
 import useStore, { loadSavedServers } from "./store";
@@ -185,6 +186,9 @@ const App: React.FC = () => {
 
   // Initialize keyboard resize handling for mobile platforms
   useKeyboardResize();
+
+  // Initialize update check hook (auto-checks when server connects)
+  useUpdateCheck();
 
   // askPermissions();
   useEffect(() => {

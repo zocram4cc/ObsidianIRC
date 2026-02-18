@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Information about an available update
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateInfo {
     /// Version string (e.g., "0.2.4")
     pub version: String,
@@ -10,6 +11,7 @@ pub struct UpdateInfo {
     /// Release name
     pub name: String,
     /// Release notes (markdown)
+    #[serde(rename = "releaseNotes")]
     pub body: String,
     /// Platform-specific download URL
     pub download_url: String,
@@ -116,48 +118,77 @@ pub async fn check_for_updates(app: tauri::AppHandle) -> Result<Option<UpdateInf
     let current_version = app.config().version.clone()
         .unwrap_or_else(|| "0.0.0".to_string());
     
+    log::info!("Checking for updates. Current version: {}", current_version);
+    
     // Get current tag from version (assume format v{version}-build{N} or v{version})
     let current_tag = format!("v{}", current_version);
     
     // GitHub API endpoint for all releases (not /latest, which 404s for prerelease-only repos)
     let url = "https://api.github.com/repos/zocram4cc/ObsidianIRC/releases";
     
-    // Create HTTP client
+    // Create HTTP client with caching headers to avoid rate limiting
     let client = reqwest::Client::builder()
         .user_agent(format!("ObsidianIRC/{}", current_version))
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+        .map_err(|e| {
+            log::error!("Failed to create HTTP client: {}", e);
+            format!("Failed to create HTTP client: {}", e)
+        })?;
     
-    // Fetch all releases
+    // Fetch all releases with Accept header for better rate limits
     let response = client
         .get(url)
+        .header("Accept", "application/vnd.github.v3+json")
+        .header("X-GitHub-Api-Version", "2022-11-28")
         .send()
         .await
-        .map_err(|e| format!("Failed to fetch release info: {}", e))?;
+        .map_err(|e| {
+            log::error!("Failed to fetch release info: {}", e);
+            format!("Failed to fetch release info: {}", e)
+        })?;
     
     if !response.status().is_success() {
+        log::error!("GitHub API returned status: {}", response.status());
         return Err(format!("GitHub API returned status: {}", response.status()));
     }
     
     let releases: Vec<GitHubRelease> = response
         .json()
         .await
-        .map_err(|e| format!("Failed to parse release info: {}", e))?;
+        .map_err(|e| {
+            log::error!("Failed to parse release info: {}", e);
+            format!("Failed to parse release info: {}", e)
+        })?;
+    
+    log::info!("Found {} releases", releases.len());
     
     // Find the most recent release (first in the list, as GitHub returns them sorted by date)
     let latest_release = releases
         .into_iter()
         .next()
-        .ok_or_else(|| "No releases found".to_string())?;
+        .ok_or_else(|| {
+            log::error!("No releases found");
+            "No releases found".to_string()
+        })?;
+    
+    log::info!("Latest release tag: {}", latest_release.tag_name);
     
     // Parse remote version
     let remote_version = parse_version(&latest_release.tag_name)
-        .ok_or_else(|| format!("Failed to parse version from tag: {}", latest_release.tag_name))?;
+        .ok_or_else(|| {
+            log::error!("Failed to parse version from tag: {}", latest_release.tag_name);
+            format!("Failed to parse version from tag: {}", latest_release.tag_name)
+        })?;
+    
+    log::info!("Remote version: {}, Current version: {}", remote_version, current_version);
     
     // Check if this is a newer version
     if !is_newer_version(&current_version, &remote_version, &current_tag, &latest_release.tag_name) {
+        log::info!("No update available - current version is up to date");
         return Ok(None);
     }
+    
+    log::info!("Update available! New version: {}", remote_version);
     
     // Find platform-specific download URL
     let pattern = get_asset_pattern();

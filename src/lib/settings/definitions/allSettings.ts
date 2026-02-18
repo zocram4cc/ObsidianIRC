@@ -382,6 +382,18 @@ const preferenceSettings: SettingDefinition[] = [
     priority: 11,
     customComponent: IgnoreListField,
   },
+  {
+    id: "preferences.autoCheckUpdates",
+    key: "autoCheckUpdates",
+    category: "preferences",
+    subcategory: "Updates",
+    title: "Auto Check for Updates",
+    description: "Automatically check for app updates on startup (Tauri only)",
+    type: "toggle",
+    defaultValue: true,
+    searchKeywords: ["update", "auto", "check", "version", "upgrade"],
+    priority: 12,
+  },
 ];
 
 /**

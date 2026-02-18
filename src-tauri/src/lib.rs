@@ -1,8 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
+mod commands;
 mod socket;
 
+use commands::{check_for_updates, get_app_version};
 use socket::{connect, disconnect, listen, send, SocketState};
 
 // use tauri_plugin_deep_link::DeepLinkExt;
@@ -42,7 +44,14 @@ pub fn run() {
             Ok(())
         })
         .manage(SocketState(Arc::new(Mutex::new(HashMap::new()))))
-        .invoke_handler(tauri::generate_handler![connect, disconnect, listen, send])
+        .invoke_handler(tauri::generate_handler![
+            connect,
+            disconnect,
+            listen,
+            send,
+            check_for_updates,
+            get_app_version
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

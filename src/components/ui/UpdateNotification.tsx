@@ -1,8 +1,9 @@
-import { FaDownload, FaExternalLinkAlt, FaSync, FaTimes } from "react-icons/fa";
+import { FaExternalLinkAlt, FaSync, FaTimes } from "react-icons/fa";
 import { useUpdateCheck } from "../../hooks/useUpdateCheck";
 
 /**
- * Update notification banner that appears when a new version is available
+ * Update notification toast that appears when a new version is available
+ * This is a small, non-intrusive popup at the top of the screen
  */
 export const UpdateNotification: React.FC = () => {
   const {
@@ -20,54 +21,46 @@ export const UpdateNotification: React.FC = () => {
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 shadow-lg">
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-        {/* Update info */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="flex-shrink-0">
-            <FaDownload className="w-5 h-5" />
+    <div className="fixed top-0 left-1/2 -translate-x-1/2 z-50 mt-2 max-w-sm w-full px-4">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-lg overflow-hidden">
+        <div className="flex items-center justify-between gap-2 px-3 py-2">
+          {/* Update info */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex-shrink-0">
+              <span className="text-xs font-medium bg-blue-500 px-1.5 py-0.5 rounded">
+                NEW
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">
+                v{updateInfo.version} available
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="font-medium text-sm">
-              Update Available: {updateInfo.version}
-            </p>
-            <p className="text-xs text-blue-100 truncate">
-              A new version of ObsidianIRC is ready to download
-            </p>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {/* View release page */}
+            <a
+              href={updateInfo.releaseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-100 hover:text-white hover:bg-blue-500/50 rounded transition-colors"
+              title="View release on GitHub"
+            >
+              <FaExternalLinkAlt className="w-3 h-3" />
+              <span>View</span>
+            </a>
+
+            {/* Dismiss button */}
+            <button
+              onClick={dismissUpdate}
+              className="p-1 text-blue-100 hover:text-white hover:bg-blue-500/50 rounded transition-colors"
+              title="Dismiss (will show again on next startup)"
+            >
+              <FaTimes className="w-3.5 h-3.5" />
+            </button>
           </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* View release notes */}
-          <a
-            href={updateInfo.releaseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-100 hover:text-white hover:bg-blue-500/50 rounded transition-colors"
-            title="View release notes on GitHub"
-          >
-            <FaExternalLinkAlt className="w-3 h-3" />
-            <span className="hidden sm:inline">Release Notes</span>
-          </a>
-
-          {/* Download button */}
-          <button
-            onClick={downloadUpdate}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-white text-blue-600 hover:bg-blue-50 rounded font-medium text-sm transition-colors shadow-sm"
-          >
-            <FaDownload className="w-3.5 h-3.5" />
-            Download
-          </button>
-
-          {/* Dismiss button */}
-          <button
-            onClick={dismissUpdate}
-            className="p-1.5 text-blue-100 hover:text-white hover:bg-blue-500/50 rounded transition-colors"
-            title="Dismiss (will show again on next startup)"
-          >
-            <FaTimes className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </div>
