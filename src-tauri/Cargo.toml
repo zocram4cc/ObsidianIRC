@@ -29,15 +29,17 @@ tauri-plugin-deep-link = "2.4"
 tokio = { version = "1.45.1", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
 base64 = "0.22"
 tauri-plugin-opener = "2.0.0"
-reqwest = { version = "0.12", features = ["json"] }
 semver = "1.0"
 
-# Use rustls for Android, native-tls for other platforms
+# Use native-tls for desktop platforms (Linux, macOS, Windows)
 [target.'cfg(not(target_os = "android"))'.dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json", "native-tls"] }
 tokio-native-tls = "0.3"
 native-tls = "0.2"
 
+# Use rustls for Android to avoid OpenSSL dependency
 [target.'cfg(target_os = "android")'.dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 tokio-rustls = { version = "0.26", default-features = false }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 webpki-roots = "0.26"
