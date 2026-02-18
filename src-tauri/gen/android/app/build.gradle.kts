@@ -51,7 +51,7 @@ android {
                 val keystoreFile = project.file("../$signingKeyStore")
                 signingConfigs {
                     create("release") {
-                        storeFile(keystoreFile)
+                        storeFile = keystoreFile
                         storePassword = signingStorePassword
                         keyAlias = signingKeyAlias
                         keyPassword = signingKeyPassword
