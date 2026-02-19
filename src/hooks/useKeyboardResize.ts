@@ -113,7 +113,7 @@ export const useKeyboardResize = () => {
 
     const scrollToBottom = () => {
       const messagesContainer = document.querySelector(
-        '.flex-grow.overflow-y-auto'
+        ".flex-grow.overflow-y-auto",
       ) as HTMLElement | null;
 
       if (messagesContainer) {
@@ -163,8 +163,14 @@ export const useKeyboardResize = () => {
     // Cleanup
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", handleVisualViewport);
-        window.visualViewport.removeEventListener("scroll", handleVisualViewport);
+        window.visualViewport.removeEventListener(
+          "resize",
+          handleVisualViewport,
+        );
+        window.visualViewport.removeEventListener(
+          "scroll",
+          handleVisualViewport,
+        );
       }
       window.removeEventListener("resize", handleWindowResize);
       window.removeEventListener("keyboardDidShow", handleAndroidKeyboardShow);

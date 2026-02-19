@@ -109,6 +109,12 @@ fn is_newer_version(current: &str, remote: &str, current_tag: &str, remote_tag: 
     }
 }
 
+/// Get the build tag that was injected at compile time
+/// This is set via OBSIDIANIRC_BUILD_TAG environment variable during CI builds
+fn get_build_tag() -> Option<&'static str> {
+    option_env!("OBSIDIANIRC_BUILD_TAG")
+}
+
 /// Check for updates by querying GitHub Releases API
 /// Uses /releases endpoint instead of /releases/latest because
 /// prerelease-only repos return 404 for /releases/latest
@@ -118,10 +124,12 @@ pub async fn check_for_updates(app: tauri::AppHandle) -> Result<Option<UpdateInf
     let current_version = app.config().version.clone()
         .unwrap_or_else(|| "0.0.0".to_string());
     
-    log::info!("Checking for updates. Current version: {}", current_version);
+    // Get current tag - prefer compile-time injected build tag, fallback to version-based tag
+    let current_tag = get_build_tag()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| format!("v{}", current_version));
     
-    // Get current tag from version (assume format v{version}-build{N} or v{version})
-    let current_tag = format!("v{}", current_version);
+    log::info!("Checking for updates. Current version: {}, current tag: {}", current_version, current_tag);
     
     // GitHub API endpoint for all releases (not /latest, which 404s for prerelease-only repos)
     let url = "https://api.github.com/repos/zocram4cc/ObsidianIRC/releases";
@@ -246,5 +254,18 @@ mod tests {
         assert!(is_newer_version("0.2.4", "0.2.4", "v0.2.4-build4", "v0.2.4-build5"));
         assert!(!is_newer_version("0.2.4", "0.2.4", "v0.2.4-build5", "v0.2.4-build4"));
         assert!(!is_newer_version("0.2.4", "0.2.4", "v0.2.4-build5", "v0.2.4-build5"));
+        
+        // BUG FIX: When current tag has build number, should NOT show update for same build
+        // This was the bug: current_tag was "v0.2.4" (no build number), so build 0 < build 21 = update
+        // With fix: current_tag is "v0.2.4-build21", so build 21 == build 21 = no update
+        assert!(!is_newer_version("0.2.4", "0.2.4", "v0.2.4-build21", "v0.2.4-build21"));
+        assert!(is_newer_version("0.2.4", "0.2.4", "v0.2.4-build20", "v0.2.4-build21"));
+        
+        // Edge case: tag without build number (dev builds) should always show update if remote has build
+        assert!(is_newer_version("0.2.4", "0.2.4", "v0.2.4", "v0.2.4-build21"));
+        
+        // User scenario: current is build2, remote is build1 - should NOT show update
+        // This ensures we don't notify users to "upgrade" to an older build
+        assert!(!is_newer_version("0.2.4", "0.2.4", "v0.2.4-build2", "v0.2.4-build1"));
     }
 }

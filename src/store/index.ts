@@ -2193,8 +2193,6 @@ const useStore = create<AppState>((set, get) => ({
       return; // Already connected, don't do it again
     }
 
-    set({ hasConnectedToSavedServers: true });
-
     runPendingMigrations();
 
     const savedServers = loadSavedServers();
@@ -2272,8 +2270,12 @@ const useStore = create<AppState>((set, get) => ({
     // Wait for all connections to complete
     await Promise.all(connectionPromises);
 
+    // FIX: Set hasConnectedToSavedServers AFTER connections complete
+    // This ensures the restore effect runs after channels are loaded
+    set({ hasConnectedToSavedServers: true });
+
     // Note: UI selection is now loaded immediately from localStorage in initial state,
-    // so no need for delayed restoration here
+    // and the channel restoration is handled in the "ready" event handler
   },
 
   reconnectServer: async (serverId: string) => {
@@ -5019,6 +5021,38 @@ ircClient.on("ready", async ({ serverId, serverName, nickname }) => {
         useStore.getState().joinChannel(serverId, channelName);
       }
     }
+
+    // FIX: After joining channels, check if we need to restore the channel selection
+    // This handles the case where selectServer was called before channels were loaded
+    // We need to wait for the channels to be added to the server object
+    const restoreChannelSelection = () => {
+      const savedSelection =
+        useStore.getState().ui.perServerSelections[serverId];
+      const savedChannelId = savedSelection?.selectedChannelId;
+
+      if (savedChannelId) {
+        const currentState = useStore.getState();
+        const server = currentState.servers.find((s) => s.id === serverId);
+        if (server) {
+          const channelExists = server.channels.some(
+            (c) => c.id === savedChannelId,
+          );
+
+          if (channelExists) {
+            useStore
+              .getState()
+              .selectChannel(savedChannelId, { navigate: true });
+          }
+        }
+      }
+    };
+
+    // Try immediately first (channels might be added synchronously)
+    restoreChannelSelection();
+
+    // If not found, try again after a short delay (channels might be added asynchronously)
+    // This handles the case where joinChannel is async
+    setTimeout(restoreChannelSelection, 500);
 
     // Only auto-select welcome page for NEW servers (no saved channels)
     // Existing servers with channels should not auto-select (preserves user's view)

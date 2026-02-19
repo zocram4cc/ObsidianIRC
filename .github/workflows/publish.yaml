@@ -78,6 +78,7 @@ jobs:
           VITE_DEFAULT_IRC_CHANNELS: "#ilex-forest"
           VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
+          OBSIDIANIRC_BUILD_TAG: ${{ needs.collect-version.outputs.tag_name }}
 
       - name: Rename AppImage
         run: |
@@ -129,6 +130,7 @@ jobs:
           VITE_DEFAULT_IRC_CHANNELS: "#ilex-forest"
           VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
+          OBSIDIANIRC_BUILD_TAG: ${{ needs.collect-version.outputs.tag_name }}
 
       - name: Rename Windows installer
         run: |
@@ -210,6 +212,7 @@ jobs:
           VITE_DEFAULT_IRC_CHANNELS: "#ilex-forest"
           VITE_HIDE_SERVER_LIST: "false"
           VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
+          OBSIDIANIRC_BUILD_TAG: ${{ needs.collect-version.outputs.tag_name }}
 
       - name: Rename APK file
         run: |

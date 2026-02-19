@@ -190,7 +190,7 @@ const App: React.FC = () => {
   // Initialize update check hook (auto-checks when server connects)
   useUpdateCheck();
 
-  // Restore last selected server on startup
+  // Restore server selection after servers are loaded
   const ui = useStore((state) => state.ui);
   const selectServer = useStore((state) => state.selectServer);
   const servers = useStore((state) => state.servers);
@@ -208,18 +208,57 @@ const App: React.FC = () => {
       // Check if the saved server still exists
       const serverExists = servers.some((s) => s.id === ui.selectedServerId);
       if (serverExists) {
+        const savedServer = servers.find((s) => s.id === ui.selectedServerId);
+        const savedSelection = ui.perServerSelections[ui.selectedServerId];
+
         // Only restore if not already selected to avoid unnecessary re-renders
         const currentSelectedId = useStore.getState().ui.selectedServerId;
         if (currentSelectedId !== ui.selectedServerId) {
-          console.log(
-            "[App] Restoring last selected server:",
-            ui.selectedServerId,
-          );
           selectServer(ui.selectedServerId);
+        } else {
+          // Even if server is already selected, we might need to restore the channel
+          const currentSelection =
+            useStore.getState().ui.perServerSelections[ui.selectedServerId];
+
+          // Restore channel selection if we have a saved channel and it exists
+          if (savedSelection?.selectedChannelId && savedServer) {
+            // First try to find by ID directly
+            let channel = savedServer.channels.find(
+              (c) => c.id === savedSelection.selectedChannelId,
+            );
+
+            // If not found, try to extract channel name from the saved ID (format: serverId-channelName)
+            if (!channel && savedSelection.selectedChannelId.includes("-")) {
+              // Extract channel name - could be "serverId-#channel" or just the channel name part
+              const possibleChannelName =
+                savedSelection.selectedChannelId.startsWith(
+                  `${ui.selectedServerId}-`,
+                )
+                  ? savedSelection.selectedChannelId.substring(
+                      ui.selectedServerId.length + 1,
+                    )
+                  : savedSelection.selectedChannelId;
+
+              // Find channel by name
+              channel = savedServer.channels.find(
+                (c) => c.name === possibleChannelName,
+              );
+            }
+
+            if (channel && currentSelection?.selectedChannelId !== channel.id) {
+              useStore.getState().selectChannel(channel.id);
+            }
+          }
         }
       }
     }
-  }, [hasConnectedToSavedServers, servers, ui.selectedServerId, selectServer]);
+  }, [
+    hasConnectedToSavedServers,
+    servers,
+    ui.selectedServerId,
+    selectServer,
+    ui.perServerSelections[ui.selectedServerId],
+  ]);
 
   // askPermissions();
   useEffect(() => {
