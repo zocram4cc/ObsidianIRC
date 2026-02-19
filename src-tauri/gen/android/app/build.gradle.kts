@@ -30,7 +30,8 @@ android {
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
+            packaging {
+                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
@@ -39,25 +40,27 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             
-            // Read signing config from gradle.properties
-            val signingKeyStore = project.property("android.signing.key.store") as? String
-            val signingKeyAlias = project.property("android.signing.key.alias") as? String
-            val signingStorePassword = project.property("android.signing.key.storePassword") as? String
-            val signingKeyPassword = project.property("android.signing.key.aliasPassword") as? String
+            // Read signing config from gradle.properties (safe access)
+            val signingKeyStore = project.findProperty("android.signing.key.store") as? String
+            val signingKeyAlias = project.findProperty("android.signing.key.alias") as? String
+            val signingStorePassword = project.findProperty("android.signing.key.storePassword") as? String
+            val signingKeyPassword = project.findProperty("android.signing.key.aliasPassword") as? String
             
             if (signingKeyStore != null && signingKeyAlias != null && signingStorePassword != null && signingKeyPassword != null) {
                 // Keystore is in src-tauri/gen/android/, build.gradle.kts is in src-tauri/gen/android/app/
                 // Use project.file() to get absolute path
                 val keystoreFile = project.file("../$signingKeyStore")
-                signingConfigs {
-                    create("release") {
-                        storeFile = keystoreFile
-                        storePassword = signingStorePassword
-                        keyAlias = signingKeyAlias
-                        keyPassword = signingKeyPassword
+                if (keystoreFile.exists()) {
+                    signingConfigs {
+                        create("release") {
+                            storeFile = keystoreFile
+                            storePassword = signingStorePassword
+                            keyAlias = signingKeyAlias
+                            keyPassword = signingKeyPassword
+                        }
                     }
+                    signingConfig = signingConfigs.getByName("release")
                 }
-                signingConfig = signingConfigs.getByName("release")
             }
             
             proguardFiles(

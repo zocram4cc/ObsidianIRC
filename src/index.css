@@ -134,11 +134,9 @@ body {
   body {
     overflow: hidden;
   }
-  
+
   #root {
     height: 100%;
-    height: calc(100% - var(--keyboard-height, 0px));
-    transition: height 0.2s ease-in-out;
     position: relative;
   }
 }

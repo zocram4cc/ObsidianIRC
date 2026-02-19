@@ -1,0 +1,123 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // Starts the Android emulator and waits for it to boot.
+            // Run this first when starting a fresh session.
+            "label": "Android: Start Emulator",
+            "type": "shell",
+            "command": "$HOME/Android/Sdk/emulator/emulator",
+            "args": [
+                "-avd",
+                "Medium_Phone_API_36.1"
+            ],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": {
+                "owner": "android-emulator",
+                "pattern": [
+                    {
+                        "regexp": ".*"
+                    }
+                ],
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*Booting.*",
+                    "endsPattern": ".*HAX is working and emulator runs in fast virt mode.*|.*Serial number of this emulator.*"
+                }
+            }
+        },
+        {
+            // Waits for an Android device/emulator to be available.
+            // Use this as a prerequisite for other tasks.
+            "label": "Android: Wait for Device",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/wait_for_device.sh",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            // Launches the app in debug mode, pausing for debugger attachment.
+            // Prerequisites: Emulator running + app installed.
+            "label": "Android: Start App and Attach",
+            "type": "shell",
+            "command": "$HOME/Android/Sdk/platform-tools/adb",
+            "args": [
+                "shell",
+                "am",
+                "start",
+                "-D",
+                "-n",
+                "com.obsidianirc.dev/.MainActivity"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "dependsOn": ["Android: Wait for Device"]
+        },
+        {
+            "label": "Android: Get PID",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/get_android_pid.sh",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: Kill App",
+            "type": "shell",
+            "command": "$HOME/Android/Sdk/platform-tools/adb",
+            "args": [
+                "shell",
+                "am",
+                "force-stop",
+                "com.obsidianirc.dev"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: Reinstall App",
+            "type": "shell",
+            "command": "$HOME/Android/Sdk/platform-tools/adb",
+            "args": [
+                "install",
+                "-r",
+                "${workspaceFolder}/src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "dependsOn": ["Android: Wait for Device"]
+        },
+        {
+            // Required before using "React Frontend Debug (Mobile)" launch config.
+            // Forwards the Android WebView DevTools port to localhost:9222 so
+            // VSCode's Chrome debugger can attach to the in-app WebView.
+            "label": "Android: Forward DevTools Port",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/forward_devtools.sh",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "dependsOn": ["Android: Wait for Device"]
+        }
+    ]
+}

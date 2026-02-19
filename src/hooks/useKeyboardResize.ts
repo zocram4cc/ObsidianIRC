@@ -27,27 +27,45 @@ export const useKeyboardResize = () => {
       }
     }
 
+    // With Android 13+ (API 33+), we use WindowInsets API in native code
+    // which should handle keyboard visibility automatically.
+    // For older Android versions, keep using visualViewport approach.
+
     let isKeyboardVisible = false;
-    let initialViewportHeight =
-      window.visualViewport?.height || window.innerHeight;
+    let initialHeight: number;
 
-    const handleVisualViewportChange = () => {
-      if (!window.visualViewport) return;
+    if (window.visualViewport) {
+      initialHeight = window.visualViewport.height;
+    } else {
+      initialHeight = window.innerHeight;
+    }
 
-      const currentHeight = window.visualViewport.height;
-      const heightDifference = initialViewportHeight - currentHeight;
+    const handleVisualViewport = () => {
+      if (!window.visualViewport) {
+        return;
+      }
 
-      // Keyboard is considered visible if the viewport height decreased significantly
+      const heightDifference = initialHeight - window.visualViewport.height;
+
+      // Keyboard is considered visible if height decreases by more than 20%
       const keyboardWasVisible = isKeyboardVisible;
-      isKeyboardVisible = heightDifference > 150; // Adjust threshold as needed
+      isKeyboardVisible = heightDifference > initialHeight * 0.2;
 
-      // Force a resize event when keyboard state changes
       if (keyboardWasVisible !== isKeyboardVisible) {
         updateKeyboardState(isKeyboardVisible, heightDifference);
       }
     };
 
     const updateKeyboardState = (visible: boolean, heightDiff: number) => {
+      if (import.meta.env.DEV) {
+        console.log(
+          "[useKeyboardResize] Keyboard state change - visible:",
+          visible,
+          "height diff:",
+          heightDiff,
+        );
+      }
+
       // Update CSS custom property for keyboard height
       document.documentElement.style.setProperty(
         "--keyboard-height",
@@ -61,19 +79,62 @@ export const useKeyboardResize = () => {
       setTimeout(() => {
         window.dispatchEvent(new Event("resize"));
       }, 50);
+
+      // Scroll the input field into view when keyboard appears
+      if (visible) {
+        scrollInputIntoView();
+      }
+    };
+
+    const scrollInputIntoView = () => {
+      // Find the textarea input element
+      const inputElement = document.querySelector(
+        'textarea[placeholder*="Message"]',
+      ) as HTMLTextAreaElement | null;
+
+      if (inputElement) {
+        if (import.meta.env.DEV) {
+          console.log("[useKeyboardResize] Scrolling input into view");
+        }
+        // Use setTimeout to ensure the keyboard animation has started
+        setTimeout(() => {
+          inputElement.scrollIntoView({
+            behavior: "auto",
+            block: "end",
+            inline: "nearest",
+          });
+        }, 50);
+      } else {
+        if (import.meta.env.DEV) {
+          console.log("[useKeyboardResize] Input element not found");
+        }
+      }
+    };
+
+    const scrollToBottom = () => {
+      const messagesContainer = document.querySelector(
+        '.flex-grow.overflow-y-auto'
+      ) as HTMLElement | null;
+
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
     };
 
     const handleAndroidKeyboardShow = () => {
+      if (import.meta.env.DEV) {
+        console.log("[useKeyboardResize] keyboardDidShow event fired");
+      }
       if (!isKeyboardVisible) {
         isKeyboardVisible = true;
-        const heightDiff =
-          initialViewportHeight -
-          (window.visualViewport?.height || window.innerHeight);
-        updateKeyboardState(true, heightDiff);
+        updateKeyboardState(true, 300); // Fallback height
       }
     };
 
     const handleAndroidKeyboardHide = () => {
+      if (import.meta.env.DEV) {
+        console.log("[useKeyboardResize] keyboardDidHide event fired");
+      }
       if (isKeyboardVisible) {
         isKeyboardVisible = false;
         updateKeyboardState(false, 0);
@@ -81,50 +142,33 @@ export const useKeyboardResize = () => {
     };
 
     const handleWindowResize = () => {
-      // Update initial height when window is resized
-      if (window.visualViewport) {
-        if (!isKeyboardVisible) {
-          initialViewportHeight = window.visualViewport.height;
-        }
-      } else {
-        initialViewportHeight = window.innerHeight;
+      if (!isKeyboardVisible) {
+        initialHeight = window.visualViewport?.height || window.innerHeight;
       }
     };
 
-    // Use visualViewport API if available (modern browsers)
+    // Prefer visualViewport API for reliable keyboard height detection
+    // This is stable across devices and doesn't rely on native height measurement
     if (window.visualViewport) {
-      window.visualViewport.addEventListener(
-        "resize",
-        handleVisualViewportChange,
-      );
-      window.visualViewport.addEventListener(
-        "scroll",
-        handleVisualViewportChange,
-      );
+      window.visualViewport.addEventListener("resize", handleVisualViewport);
+      window.visualViewport.addEventListener("scroll", handleVisualViewport);
     }
 
-    // Listen for native Android keyboard events
+    window.addEventListener("resize", handleWindowResize);
+
+    // Listen for native Android keyboard events (for backward compatibility)
     window.addEventListener("keyboardDidShow", handleAndroidKeyboardShow);
     window.addEventListener("keyboardDidHide", handleAndroidKeyboardHide);
-
-    // Fallback for older browsers or additional handling
-    window.addEventListener("resize", handleWindowResize);
 
     // Cleanup
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener(
-          "resize",
-          handleVisualViewportChange,
-        );
-        window.visualViewport.removeEventListener(
-          "scroll",
-          handleVisualViewportChange,
-        );
+        window.visualViewport.removeEventListener("resize", handleVisualViewport);
+        window.visualViewport.removeEventListener("scroll", handleVisualViewport);
       }
+      window.removeEventListener("resize", handleWindowResize);
       window.removeEventListener("keyboardDidShow", handleAndroidKeyboardShow);
       window.removeEventListener("keyboardDidHide", handleAndroidKeyboardHide);
-      window.removeEventListener("resize", handleWindowResize);
 
       // Reset CSS property
       document.documentElement.style.removeProperty("--keyboard-height");

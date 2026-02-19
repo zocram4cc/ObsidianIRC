@@ -1,59 +1,61 @@
 package com.obsidianirc.dev
 
+import android.os.Bundle
+import android.os.Build
+import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.OnApplyWindowInsetsListener
+import kotlin.math.max
 import android.webkit.WebView
 import android.annotation.SuppressLint
-import android.view.ViewTreeObserver
-import android.view.View
-import android.graphics.Rect
 
+// WindowInsets utility for handling system bars and IME insets
+object WindowInsetsUtil {
+    fun applySystemBarsPadding(view: View) {
+        ViewCompat.setOnApplyWindowInsetsListener(
+            view,
+            OnApplyWindowInsetsListener { v: View?, windowInsets: WindowInsetsCompat? ->
+                val systemBars = windowInsets!!.getInsets(WindowInsetsCompat.Type.systemBars())
+                val ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+                v!!.setPadding(
+                    systemBars.left,
+                    systemBars.top,
+                    systemBars.right,
+                    max(systemBars.bottom, ime.bottom)
+                )
+                WindowInsetsCompat.CONSUMED
+            })
+    }
+}
 
 class MainActivity : TauriActivity() {
-  private lateinit var wv: WebView
-  private var isKeyboardOpen = false
-  
-  override fun onWebViewCreate(webView: WebView) {
-    wv = webView
-    setupKeyboardDetection()
-  }
-  
-  private fun setupKeyboardDetection() {
-    val rootView = findViewById<View>(android.R.id.content)
-    val globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
-      val rect = Rect()
-      rootView.getWindowVisibleDisplayFrame(rect)
-      val screenHeight = rootView.rootView.height
-      val keypadHeight = screenHeight - rect.bottom
+    private lateinit var wv: WebView
+    private var isKeyboardOpen = false
 
-      if (keypadHeight > screenHeight * 0.15) { // keyboard is opened
-        if (!isKeyboardOpen) {
-          isKeyboardOpen = true
-          // Force immediate layout adjustment
-          wv.evaluateJavascript("window.dispatchEvent(new Event('keyboardDidShow'));", null)
-        }
-      } else { // keyboard is closed
-        if (isKeyboardOpen) {
-          isKeyboardOpen = false
-          wv.evaluateJavascript("window.dispatchEvent(new Event('keyboardDidHide'));", null)
-        }
-      }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Apply window insets to handle keyboard visibility on Android 13+ (API 33+)
+        window.decorView?.let { WindowInsetsUtil.applySystemBarsPadding(it) }
     }
-    
-    rootView.viewTreeObserver.addOnGlobalLayoutListener(globalLayoutListener)
-  }
-  
-  @SuppressLint("MissingSuperCall", "SetTextI18n")
-  @Deprecated("")
-  override fun onBackPressed() {
-    wv.evaluateJavascript(/* script = */ """
+
+    override fun onWebViewCreate(webView: WebView) {
+        wv = webView
+    }
+
+    @SuppressLint("MissingSuperCall", "SetTextI18n")
+    @Deprecated("")
+    override fun onBackPressed() {
+        wv.evaluateJavascript(/* script = */ """
       try {
         window.androidBackCallback()
       } catch (_) {
         true
       }
     """.trimIndent()) { result ->
-      if (result == "true") {
-        super.onBackPressed();
-      }
+            if (result == "true") {
+                super.onBackPressed();
+            }
+        }
     }
-  }
 }
