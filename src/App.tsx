@@ -257,7 +257,7 @@ const App: React.FC = () => {
     servers,
     ui.selectedServerId,
     selectServer,
-    ui.perServerSelections[ui.selectedServerId],
+    ui.perServerSelections,
   ]);
 
   // askPermissions();
